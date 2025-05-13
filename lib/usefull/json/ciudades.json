@@ -1,0 +1,234 @@
+[
+  {
+    "nombre": "Bogotá",
+    "departamento": "Cundinamarca"
+  },
+  {
+    "nombre": "Medellín",
+    "departamento": "Antioquia"
+  },
+  {
+    "nombre": "Cali",
+    "departamento": "Valle del Cauca"
+  },
+  {
+    "nombre": "Barranquilla",
+    "departamento": "Atlántico"
+  },
+  {
+    "nombre": "Cartagena",
+    "departamento": "Bolívar"
+  },
+  {
+    "nombre": "Bucaramanga",
+    "departamento": "Santander"
+  },
+  {
+    "nombre": "Pereira",
+    "departamento": "Risaralda"
+  },
+  {
+    "nombre": "Santa Marta",
+    "departamento": "Magdalena"
+  },
+  {
+    "nombre": "Manizales",
+    "departamento": "Caldas"
+  },
+  {
+    "nombre": "Ibagué",
+    "departamento": "Tolima"
+  },
+  {
+    "nombre": "Cúcuta",
+    "departamento": "Norte de Santander"
+  },
+  {
+    "nombre": "Villavicencio",
+    "departamento": "Meta"
+  },
+  {
+    "nombre": "Armenia",
+    "departamento": "Quindío"
+  },
+  {
+    "nombre": "Pasto",
+    "departamento": "Nariño"
+  },
+  {
+    "nombre": "Neiva",
+    "departamento": "Huila"
+  },
+  {
+    "nombre": "Montería",
+    "departamento": "Córdoba"
+  },
+  {
+    "nombre": "Sincelejo",
+    "departamento": "Sucre"
+  },
+  {
+    "nombre": "Riohacha",
+    "departamento": "La Guajira"
+  },
+  {
+    "nombre": "Valledupar",
+    "departamento": "Cesar"
+  },
+  {
+    "nombre": "Tunja",
+    "departamento": "Boyacá"
+  },
+  {
+    "nombre": "Florencia",
+    "departamento": "Caquetá"
+  },
+  {
+    "nombre": "Quibdó",
+    "departamento": "Chocó"
+  },
+  {
+    "nombre": "Popayán",
+    "departamento": "Cauca"
+  },
+  {
+    "nombre": "Leticia",
+    "departamento": "Amazonas"
+  },
+  {
+    "nombre": "Yopal",
+    "departamento": "Casanare"
+  },
+  {
+    "nombre": "Mocoa",
+    "departamento": "Putumayo"
+  },
+  {
+    "nombre": "San José del Guaviare",
+    "departamento": "Guaviare"
+  },
+  {
+    "nombre": "Puerto Carreño",
+    "departamento": "Vichada"
+  },
+  {
+    "nombre": "Mitú",
+    "departamento": "Vaupés"
+  },
+  {
+    "nombre": "Inírida",
+    "departamento": "Guainía"
+  },
+  {
+    "nombre": "Turbo",
+    "departamento": "Antioquia"
+  },
+  {
+    "nombre": "Chía",
+    "departamento": "Cundinamarca"
+  },
+  {
+    "nombre": "Soacha",
+    "departamento": "Cundinamarca"
+  },
+  {
+    "nombre": "Zipaquirá",
+    "departamento": "Cundinamarca"
+  },
+  {
+    "nombre": "Fusagasugá",
+    "departamento": "Cundinamarca"
+  },
+  {
+    "nombre": "Girardot",
+    "departamento": "Cundinamarca"
+  },
+  {
+    "nombre": "Sogamoso",
+    "departamento": "Boyacá"
+  },
+  {
+    "nombre": "Duitama",
+    "departamento": "Boyacá"
+  },
+  {
+    "nombre": "Maicao",
+    "departamento": "La Guajira"
+  },
+  {
+    "nombre": "Apartadó",
+    "departamento": "Antioquia"
+  },
+  {
+    "nombre": "Rionegro",
+    "departamento": "Antioquia"
+  },
+  {
+    "nombre": "Envigado",
+    "departamento": "Antioquia"
+  },
+  {
+    "nombre": "Itagüí",
+    "departamento": "Antioquia"
+  },
+  {
+    "nombre": "Sabaneta",
+    "departamento": "Antioquia"
+  },
+  {
+    "nombre": "Bello",
+    "departamento": "Antioquia"
+  },
+  {
+    "nombre": "Floridablanca",
+    "departamento": "Santander"
+  },
+  {
+    "nombre": "Piedecuesta",
+    "departamento": "Santander"
+  },
+  {
+    "nombre": "Barrancabermeja",
+    "departamento": "Santander"
+  },
+  {
+    "nombre": "Palmira",
+    "departamento": "Valle del Cauca"
+  },
+  {
+    "nombre": "Tuluá",
+    "departamento": "Valle del Cauca"
+  },
+  {
+    "nombre": "Buenaventura",
+    "departamento": "Valle del Cauca"
+  },
+  {
+    "nombre": "Jamundí",
+    "departamento": "Valle del Cauca"
+  },
+  {
+    "nombre": "Yumbo",
+    "departamento": "Valle del Cauca"
+  },
+  {
+    "nombre": "Buga",
+    "departamento": "Valle del Cauca"
+  },
+  {
+    "nombre": "Ipiales",
+    "departamento": "Nariño"
+  },
+  {
+    "nombre": "Tumaco",
+    "departamento": "Nariño"
+  },
+  {
+    "nombre": "San Andrés",
+    "departamento": "San Andrés y Providencia"
+  },
+  {
+    "nombre": "Providencia",
+    "departamento": "San Andrés y Providencia"
+  }
+]
