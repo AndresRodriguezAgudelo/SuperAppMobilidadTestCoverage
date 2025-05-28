@@ -14,8 +14,10 @@ import '../BLoC/auth/user_bloc.dart';
 import '../BLoC/auth/auth.dart';
 import '../BLoC/auth/auth_context.dart';
 import '../BLoC/vehicles/vehicles_bloc.dart';
+import '../utils/error_utils.dart';
 import '../BLoC/home/home_bloc.dart';
 import '../BLoC/alerts/alerts_bloc.dart';
+import '../widgets/loading.dart';
 
 class RegisterUserScreen extends StatefulWidget {
   const RegisterUserScreen({super.key});
@@ -64,7 +66,30 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    phoneNumber = ModalRoute.of(context)?.settings.arguments as String? ?? '';
+    
+    // Obtener los argumentos de manera segura
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    
+    // Verificar el tipo de argumento y extraer el número de teléfono
+    if (arguments != null) {
+      if (arguments is String) {
+        // Si es una cadena directa, usarla como número de teléfono
+        phoneNumber = arguments;
+      } else if (arguments is Map<String, dynamic>) {
+        // Si es un mapa, buscar la clave 'phone'
+        phoneNumber = arguments['phone'] ?? '';
+      } else {
+        // Tipo de argumento no reconocido
+        phoneNumber = '';
+        debugPrint('⚠️ ADVERTENCIA: Tipo de argumento no reconocido en RegisterUserScreen: ${arguments.runtimeType}');
+      }
+    } else {
+      // No hay argumentos
+      phoneNumber = '';
+      debugPrint('⚠️ ADVERTENCIA: No se recibieron argumentos en RegisterUserScreen');
+    }
+    
+    debugPrint('📱 RegisterUserScreen: Número de teléfono recibido: $phoneNumber');
   }
 
   void _validateStep1(String code, bool isValid) {
@@ -98,6 +123,47 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
           documentoPropietario != null;
       isStepValid = isStep3Valid;
     });
+  }
+  
+  // Determina el texto del botón según el paso actual y el estado
+  String _getButtonText() {
+    if (currentStep == 1) {
+      // En el paso 1, verificar si estamos en modo reenvío o validación
+      final stepOne = _stepOneKey.currentState;
+      if (stepOne == null) return 'Continuar';
+      
+      if (stepOne.canValidate) {
+        return 'Continuar';
+      } else if (stepOne.canResend) {
+        return 'Reenviar código';
+      } else {
+        return 'Reenviar en ${stepOne.timerCount}';
+      }
+    } else if (currentStep == 3) {
+      return 'Ingresar';
+    } else {
+      return 'Continuar';
+    }
+  }
+  
+  // Determina la acción del botón según el paso actual y el estado
+  VoidCallback? _getButtonAction() {
+    if (_isCreatingUser || _isLoggingIn) return null;
+    
+    if (currentStep == 1) {
+      final stepOne = _stepOneKey.currentState;
+      if (stepOne == null) return null;
+      
+      // Si hay un código válido o se puede reenviar, habilitar el botón
+      if (stepOne.canValidate || stepOne.canResend) {
+        return _nextStep;
+      } else {
+        return null; // Deshabilitar durante la cuenta regresiva
+      }
+    } else {
+      // Para otros pasos, usar la lógica original
+      return isStepValid ? _nextStep : null;
+    }
   }
 
   Future<bool> _createUser() async {
@@ -179,7 +245,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
 
       showConfirmationModal(
         context,
-        label: 'Error al crear el usuario. Por favor intenta nuevamente.',
+        label: 'Error al crear el usuario: ${ErrorUtils.cleanErrorMessage(e)}',
         attitude: 0,
       );
       return false;
@@ -269,17 +335,21 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
           } else {
             // Mostrar modal de error pero continuar con la navegación
             if (mounted) {
+              // Limpiar el mensaje de error usando ErrorUtils
+              final cleanedError = ErrorUtils.cleanErrorMessage(_vehiclesBloc.error ?? "Error desconocido");
+              
               CustomModal.show(
                 context: context,
                 icon: Icons.error_outline,
+                iconColor: Colors.white,
                 title: 'Advertencia',
-                content: 'Tu cuenta ha sido creada correctamente, pero hubo un problema al registrar el vehículo: ${_vehiclesBloc.error ?? "Error desconocido"}',
+                content: 'Tu cuenta ha sido creada correctamente, pero hubo un problema al registrar el vehículo: $cleanedError',
                 buttonText: 'Continuar',
                 onButtonPressed: () {
                   // Cerrar el modal
                   Navigator.pop(context);
                   // Ir a la pantalla principal
-                  Navigator.pushReplacementNamed(context, '/home');
+                 Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                 },
               );
               setState(() {
@@ -297,6 +367,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
             CustomModal.show(
               context: context,
               icon: Icons.error_outline,
+              iconColor: Colors.white,
               title: 'Advertencia',
               content: 'Tu cuenta ha sido creada correctamente, pero hubo un problema al registrar el vehículo. Podrás agregar tu vehículo más tarde.',
               buttonText: 'Continuar',
@@ -304,7 +375,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                 // Cerrar el modal
                 Navigator.pop(context);
                 // Ir a la pantalla principal
-                Navigator.pushReplacementNamed(context, '/home');
+               Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
               },
             );
             // Asegurar que ambas variables de loading se establezcan a false antes de salir
@@ -327,7 +398,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
       }
       
       print('\n🏠 Navegando a pantalla principal');
-      Navigator.pushReplacementNamed(context, '/home');
+     Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     } catch (e) {
       print('❌ Error finalizando registro: $e');
       if (!mounted) return;
@@ -361,6 +432,13 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
     
     if (currentStep < 3) {
       if (currentStep == 1) {
+        // Verificar si el botón está en modo reenviar OTP
+        if (_stepOneKey.currentState?.canResend == true) {
+          print('\n📤 Reenviando OTP');
+          await _stepOneKey.currentState?.resendOTP();
+          return; // Salir después de reenviar OTP
+        }
+        
         print('\n🔑 Validando OTP antes de continuar al paso 2');
         // Validar OTP antes de continuar
         await _stepOneKey.currentState?.validateOTP();
@@ -420,20 +498,19 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-
-
-      resizeToAvoidBottomInset: true,
-
-      
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
-        child: TopBar(
-          title: 'Registro de usuario',
-          screenType: ScreenType.progressScreen,
+    return Loading(
+      isLoading: _isCreatingUser || _isLoggingIn,
+      message: null,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: true,
+        appBar: const PreferredSize(
+          preferredSize: Size.fromHeight(kToolbarHeight),
+          child: TopBar(
+            title: '',
+            screenType: ScreenType.progressScreen,
+          ),
         ),
-      ),
       body: Column(
         children: [
           Expanded(
@@ -461,6 +538,15 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                               key: _stepOneKey,
                               phoneNumber: phoneNumber,
                               onValidate: _validateStep1,
+                              onTimerChanged: () {
+                                // Forzar actualización de la UI cuando cambia el contador
+                                // Usar Future.microtask para evitar llamar a setState durante la fase de construcción
+                                if (mounted) {
+                                  Future.microtask(() {
+                                    if (mounted) setState(() {});
+                                  });
+                                }
+                              },
                             ),
                             StepTwo(
                               onValidate: _validateStep2,
@@ -478,8 +564,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
 
 
                   const SizedBox(height: 25),
-                  if (currentStep == 3) ...[
-                    // Solo mostrar en el paso 3
+                  if (currentStep == 3) ...[                    // Solo mostrar en el paso 3
                     Center(
                       child: Button(
                         text: 'Continuar sin registrar vehículo',
@@ -487,7 +572,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                           CustomModal.show(
                             context: context,
                             icon: Icons.warning_rounded,
-                            iconColor: Colors.orange,
+                            iconColor: Colors.white,
                             title: '¿Estás seguro?',
                             content:
                                 'Si continúas sin registrar un vehículo, algunas funciones de la aplicación no estarán disponibles.',
@@ -503,9 +588,11 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                   ],
                   Center(
                     child: Button(
-                      text: currentStep < 3 ? 'Continuar' : 'Finalizar',
-                      action: isStepValid ? ((_isCreatingUser || _isLoggingIn) ? null : _nextStep) : null,
-                      isLoading: _isCreatingUser || _isLoggingIn,
+                      text: _getButtonText(),
+                      action: _getButtonAction(),
+                      isLoading: _isCreatingUser || _isLoggingIn || 
+                               (currentStep == 1 && (_stepOneKey.currentState?.isValidating == true || 
+                                                    _stepOneKey.currentState?.isResending == true)),
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -515,6 +602,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

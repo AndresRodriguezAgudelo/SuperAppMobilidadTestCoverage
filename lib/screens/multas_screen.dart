@@ -6,6 +6,7 @@ import '../widgets/button.dart';
 import '../widgets/historialVehicular/historial_vehicular_card.dart';
 import '../BLoC/multas/multas_bloc.dart';
 import '../widgets/loading.dart';
+// Importaciones eliminadas por no ser utilizadas
 
 class MultasScreen extends StatefulWidget {
   final String? plate;
@@ -135,17 +136,25 @@ class _MultasScreenState extends State<MultasScreen> {
         ),
         const SizedBox(height: 24),
         const Text(
-          '¡Felicidades! No tienes multas vigentes',
+          '¡Felicidades!',
           style: TextStyle(
             fontSize: 22,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 16),
+                const Text(
+          'No tienes multas vigentes',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 10),
         const Text(
           'Sigue cuidando tu historial y conduciendo responsablemente.',
-          style: TextStyle(fontSize: 16, color: Colors.black54),
+          style: TextStyle(fontSize: 18, color: Colors.black),
           textAlign: TextAlign.center,
         ),
       ],
@@ -207,8 +216,11 @@ Widget build(BuildContext context) {
                     'El cumplimiento de las normas de tránsito es clave para garantizar la seguridad vial. '
                     'El respeto de las señales, límites de velocidad y reglas de prioridad ayuda a evitar '
                     'colisiones y reduce el riesgo de accidentes. Aplica T&C',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                      fontSize: 16, 
+                      color: Colors.black
+                      ),
                   ),
                   const SizedBox(height: 24),
 
@@ -227,12 +239,21 @@ Widget build(BuildContext context) {
                         children: [
                           const Text(
                             'Última actualización',
-                            style: TextStyle(color: Colors.black54),
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              
+                              ),
                           ),
                           if (ultimaActualizacion != null)
                             Text(
                               _formatDateTime(ultimaActualizacion),
-                              style: const TextStyle(color: Colors.black54),
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w800,
+
+                              fontSize: 16,
+                                ),
                             ),
                         ],
                       ),

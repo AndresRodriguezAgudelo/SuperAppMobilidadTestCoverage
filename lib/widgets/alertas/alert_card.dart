@@ -64,8 +64,12 @@ class _AlertCardState extends State<AlertCard> with SingleTickerProviderStateMix
   
   // Método para convertir el nombre del icono en un objeto IconData
   IconData _getIconData(String? iconName) {
+    // Imprimir información de depuración
+    //print('\n📌 ALERT_CARD: iconName="$iconName", title="${widget.title}", status="${widget.status}"');
+    
     // Si no se proporciona un nombre de icono o es vacío, usar el icono predeterminado
     if (iconName == null || iconName.isEmpty) {
+      //print('\n📌 ALERT_CARD: iconName es nulo o vacío, usando icono predeterminado');
       return Icons.notifications;
     }
     
@@ -77,24 +81,23 @@ class _AlertCardState extends State<AlertCard> with SingleTickerProviderStateMix
       case 'Security':
         return Icons.security;
       case 'account_box':
-        return Icons.account_box;
+        return Icons.account_box_outlined;
       case 'directions_car':
-        return Icons.directions_car;
+        return Icons.directions_car_outlined;
       case 'assignment':
-        return Icons.assignment;
+        return Icons.assignment_outlined;
       case 'assessment':
-        return Icons.assessment;
+        return Icons.assessment_outlined;
       case 'fire_extinguisher':
         return Icons.fire_extinguisher;
       case 'business_center':
-        return Icons.business_center;
+        return Icons.business_center_outlined;
       case 'Tire repair':
-        return Icons.tire_repair;
+        return Icons.tire_repair_outlined;
       case 'opacity':
         return Icons.opacity;
       case 'construction':
         return Icons.construction;
-      // Iconos adicionales para compatibilidad
       case 'car':
         return Icons.directions_car;
       case 'license':
@@ -129,11 +132,11 @@ class _AlertCardState extends State<AlertCard> with SingleTickerProviderStateMix
       case 'rtm':
         return Icons.car_repair;
       case 'multas':
-        return Icons.receipt_long;
+        return Icons.assignment_outlined;
       case 'pico_placa':
-        return Icons.access_time;
+                return Icons.security;
       case 'licencia':
-        return Icons.card_membership;
+        return Icons.account_box_outlined;
       // Casos adicionales que podrían venir del backend con nombres diferentes
       case 'ssignment': // Corregir posible error tipográfico en 'assignment'
         return Icons.assignment;
@@ -149,7 +152,15 @@ class _AlertCardState extends State<AlertCard> with SingleTickerProviderStateMix
       case 'default_icon':
         return Icons.notifications;
       default:
-        // Usar icono predeterminado si no se reconoce el nombre
+        // Si no se reconoce el nombre del icono, intentar determinar por el título
+        if (widget.title == 'Pico y placa') {
+          return Icons.access_time_outlined;
+        } else if (widget.title == 'Multas') {
+          return Icons.assignment_outlined;
+        } else if (widget.title == 'Licencia de conducción') {
+          return Icons.account_box_outlined;
+        }
+        // Usar icono predeterminado si no se reconoce el nombre ni el título
         return Icons.notifications;
     }
   }
@@ -207,31 +218,46 @@ class _AlertCardState extends State<AlertCard> with SingleTickerProviderStateMix
     Color cardColor;
     Color progressColor;
     
-    // Mapear colores según el valor del estado
-    switch (widget.status) {
+    // Imprimir información de depuración sobre el estado y colores
+    //print('\n🎨 ALERT_CARD COLOR: title="${widget.title}", status="${widget.status}", id=${widget.id}');
+    
+    // Caso especial: Licencia de conducción siempre en gris
+    if (widget.title == 'Licencia de conducción') {
+      cardColor = const Color(0xFFF7F7F7); // Gris
+      progressColor = const Color(0xFF7A7A7A);
+      //rint('\n⬜ ALERT_CARD COLOR: Caso especial - Asignando color GRIS para Licencia de conducción');
+    } else {
+      // Mapear colores según el valor del estado para el resto de casos
+      switch (widget.status) {
       case 'Vencido':
       case 'No salir':
-      case 'Tiene multas':
+      case 'Con multas':
       case 'No disponible':
         cardColor = const Color(0xFFFADFD9); // Rojo
         progressColor = const Color(0xFFE05C3A);
+        //print('\n🔴 ALERT_CARD COLOR: Asignando color ROJO para status="${widget.status}"');
         break;
       case 'Por vencer':
         cardColor = const Color(0xFFFCEBDE); // Amarillo
         progressColor = const Color(0xFFF5A462);
+       // print('\n🟡 ALERT_CARD COLOR: Asignando color AMARILLO para status="${widget.status}"');
         break;
       case 'Vigente':
-      case 'Puede salir':
+      case 'Permitido salir':
       case 'No hay multas':
+      case 'Vehículo nuevo':
       case 'Sin multas':
         cardColor = const Color(0xFFEDFAD7); // Verde
         progressColor = const Color(0xFF319E7C);
+        //print('\n🟢 ALERT_CARD COLOR: Asignando color VERDE para status="${widget.status}"');
         break;
       case 'Configurar':
       case 'sinAsignar':
       default:
         cardColor = const Color(0xFFF7F7F7); // Gris
         progressColor = const Color(0xFF7A7A7A);
+        //print('\n⬜ ALERT_CARD COLOR: Asignando color GRIS para status="${widget.status}"');
+      }
     }
 
     return InkWell(
@@ -267,8 +293,8 @@ class _AlertCardState extends State<AlertCard> with SingleTickerProviderStateMix
                     child: Row(
                       children: [
                         Container(
-                          width: 45,
-                          height: 45,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             color: progressColor,
                             shape: BoxShape.circle,
@@ -276,7 +302,7 @@ class _AlertCardState extends State<AlertCard> with SingleTickerProviderStateMix
                           child: Icon(
                             _getIconData(widget.iconName),
                             color: Colors.white,
-                            size: 24,
+                            size: 30,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -289,19 +315,22 @@ class _AlertCardState extends State<AlertCard> with SingleTickerProviderStateMix
                                 widget.title,
                                 style: const TextStyle(
                                   color: Colors.black,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.2,
+                                  //overflow: TextOverflow.ellipsis,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 3),
                               Text(
                                 displayStatus,
                                 style: const TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 11,
+                                  color: Colors.black,
+                                  fontSize: 12,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),

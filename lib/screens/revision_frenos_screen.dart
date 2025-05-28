@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+import '../utils/error_utils.dart';
+import '../widgets/notification_card.dart';
 import 'package:provider/provider.dart';
 import '../widgets/inputs/input_date.dart';
 import '../widgets/button.dart';
@@ -10,6 +12,7 @@ import '../BLoC/alerts/alerts_bloc.dart';
 import '../BLoC/home/home_bloc.dart';
 import '../widgets/confirmation_modales.dart';
 import '../widgets/loading.dart';
+import '../utils/revision_frenos_utils.dart';
 
 class RevisionFrenosScreen extends StatefulWidget {
   final int alertId; // ID de la alerta para actualizaciones
@@ -36,7 +39,7 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
   late final SpecialAlertsBloc _alertsBloc;
 
   bool get isFormValid {
-    return lastUpdateDate != null; // Usar lastUpdateDate en lugar de fechaVencimiento
+    return RevisionFrenosUtils.isFormValid(lastUpdateDate);
   }
 
   @override
@@ -94,12 +97,26 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
         });
       }
     } catch (e) {
-      print('\n🔥 EXTINTOR_SCREEN: Error al cargar los detalles: $e');
+      print('\n🔥 REVISION_FRENOS_SCREEN: Error al cargar los detalles: $e');
       if (mounted) {
+        // Limpiar el mensaje de error usando ErrorUtils
+        final cleanedError = ErrorUtils.cleanErrorMessage(e);
+        
         setState(() {
-          errorMessage = 'Error al cargar los detalles: $e';
+          errorMessage = 'Error al cargar los detalles: $cleanedError';
           isLoading = false;
         });
+        
+        // Mostrar notificación al usuario
+        NotificationCard.showNotification(
+          context: context,
+          isPositive: false,
+          icon: Icons.error_outline,
+          text: cleanedError,
+          date: DateTime.now(),
+          title: 'Error al cargar datos',
+          duration: const Duration(seconds: 4),
+        );
       }
     }
   }
@@ -118,10 +135,8 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
       // Formatear la fecha correctamente para la API, asegurando que solo tenga una Z al final
       String? fechaISO;
       if (lastUpdateDate != null) {
-        // Usar el operador ! para indicar que lastUpdateDate no es nulo en este punto
-        String isoString = lastUpdateDate!.toIso8601String();
-        // Verificar si ya termina en Z para no duplicarla
-        fechaISO = isoString.endsWith('Z') ? isoString : "${isoString}Z";
+        // Usar la utilidad para formatear la fecha
+        fechaISO = RevisionFrenosUtils.formatDateToISO(lastUpdateDate!);
         print('\n📅 CAMBIO_Aceite: Guardando fecha de último mantenimiento: $lastUpdateDate');
         print('\n📅 CAMBIO_Aceite: Fecha ISO formateada correctamente: $fechaISO');
       }
@@ -242,12 +257,12 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
             isLoading = false;
           });
 
-          // Mostrar mensaje de error con ConfirmationModal
+          // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
           showConfirmationModal(
             context,
             attitude: 0, // Negativo (error)
             label:
-                'No se pudo actualizar la alerta: ${_alertsBloc.error ?? 'Intenta nuevamente'}',
+                'No se pudo actualizar la alerta: ${ErrorUtils.cleanErrorMessage(_alertsBloc.error ?? 'Intenta nuevamente')}',
           );
         }
       }
@@ -256,12 +271,12 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
         isLoading = false;
       });
 
-      // Mostrar mensaje de error con ConfirmationModal
+      // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
       if (mounted) {
         showConfirmationModal(
           context,
           attitude: 0, // Negativo (error)
-          label: 'Error al guardar: $e',
+          label: 'Error al guardar: ${ErrorUtils.cleanErrorMessage(e)}',
         );
       }
     }
@@ -269,13 +284,7 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
 
   // Método para formatear fechas en formato legible
   String _formatDate(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
-    } catch (e) {
-      print('Error al formatear fecha: $e');
-      return dateString; // Devolver la cadena original si hay un error
-    }
+    return RevisionFrenosUtils.formatDate(dateString);
   }
 
   Widget _buildInfoContainer({
@@ -506,8 +515,7 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
 
                   return TopBar(
                     title: 'Revisión de frenos',
-                    screenType: ScreenType.progressScreen,
-                    onBackPressed: () => Navigator.pop(context),
+                    screenType: ScreenType.expirationScreen, // Cambiado a expirationScreen para siempre navegar al home
                     actionItems: actionItems,
                   );
                 },
@@ -575,12 +583,26 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Mostrar la descripción de la alerta desde el bloc si está disponible
-                              Text(
-                                bloc.alertData?['description'] ??
-                                    'Revisar frenos periódicamente ayuda a mantener su vehiculo en óptimas condiciones asi como evitar accidentes.  Configure esta alerta y agende su cita de revisión.',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF6B7280),
+                              RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'Revisar frenos periódicamente ayuda a mantener su vehiculo en óptimas condiciones asi como evitar accidentes',
+                                    ),
+                                    TextSpan(
+                                      text: '. Configure esta alerta ',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: 'y agende su cita de revisión.',
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -599,7 +621,6 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
                               ),
 
                               const SizedBox(height: 25),
-
                               if (bloc.alertData != null &&
                                   bloc.alertData!['estado'] !=
                                       'Configurar') ...[
@@ -610,9 +631,8 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
                                       const Text(
                                         'Fecha de vencimiento',
                                         style: TextStyle(
-                                          fontSize: 14,
+                                          fontSize: 15,
                                           fontWeight: FontWeight.w500,
-                                          color: Color(0xFF6B7280),
                                         ),
                                       ),
                                       Text(
@@ -630,7 +650,6 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
                                     ]),
                                 const SizedBox(height: 25),
                               ],
-
                               // Mostrar mensaje de alerta si está vencido
                               if (bloc.alertData != null &&
                                   bloc.alertData!['estado'] == 'Vencido') ...[
@@ -652,44 +671,23 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
                                   bloc.alertData!['estado'] != 'Vencido' &&
                                   bloc.alertData!['estado'] !=
                                       'Configurar') ...[
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 15,
-                                      height: 15,
-                                      margin: const EdgeInsets.only(right: 16),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF38A8E0),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        // Usamos Center para centrar el contenido
-                                        child: Text(
-                                          'i',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Color.fromARGB(
-                                                255, 255, 255, 255),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const Expanded(
-                                      // Este widget permite que el texto ocupe el espacio restante
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.info, color: Color(0xFF38A8E0)),
+                                    SizedBox(width: 8),
+                                   Expanded(
                                       child: Text(
-                                        'Te avisaremos un dia antes y el dia de vencimiento para que no se te pase.',
+                                        'Te avisaremos un día antes y el día de vencimiento para que no se te pase.',
                                         style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF6B7280),
-                                        ),
-                                        softWrap:
-                                            true, // El texto se ajusta automáticamente a varias líneas
+                                            fontSize: 16, color: Colors.black),
                                       ),
                                     ),
                                   ],
                                 ),
+                              ),
                                 const SizedBox(height: 25),
                               ],
 
@@ -715,7 +713,7 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
                               // Banner de servicio
                               if (bloc.alertData != null &&
                                   bloc.alertData!['hasBanner'] == true &&
-                                  bloc.alertData!['imageBanner'] != null)
+                                  bloc.alertData!['imagenBanner'] != null)
                                 Column(
                                   children: [
                                     const SizedBox(height: 0),
@@ -727,7 +725,7 @@ class _RevisionFrenosScreenState extends State<RevisionFrenosScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
                                         child: Image.network(
-                                          bloc.alertData!['imageBanner'],
+                                          bloc.alertData!['imagenBanner'],
                                           fit: BoxFit.fill,
                                           width: double.infinity,
                                           height: double.infinity,

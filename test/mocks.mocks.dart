@@ -393,19 +393,23 @@ class MockAPIService extends _i1.Mock implements _i2.APIService {
           as String);
 
   @override
-  String getReloadExpirationEndpoint(String? name, {int? expirationId}) =>
+  String getReloadExpirationEndpoint(
+    String? name, {
+    int? expirationId,
+    int? vehicleId,
+  }) =>
       (super.noSuchMethod(
             Invocation.method(
               #getReloadExpirationEndpoint,
               [name],
-              {#expirationId: expirationId},
+              {#expirationId: expirationId, #vehicleId: vehicleId},
             ),
             returnValue: _i3.dummyValue<String>(
               this,
               Invocation.method(
                 #getReloadExpirationEndpoint,
                 [name],
-                {#expirationId: expirationId},
+                {#expirationId: expirationId, #vehicleId: vehicleId},
               ),
             ),
           )
@@ -416,12 +420,17 @@ class MockAPIService extends _i1.Mock implements _i2.APIService {
     String? name, {
     String? token,
     int? expirationId,
+    int? vehicleId,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
               #reloadExpiration,
               [name],
-              {#token: token, #expirationId: expirationId},
+              {
+                #token: token,
+                #expirationId: expirationId,
+                #vehicleId: vehicleId,
+              },
             ),
             returnValue: _i4.Future<Map<String, dynamic>>.value(
               <String, dynamic>{},
@@ -617,6 +626,12 @@ class MockAuthContext extends _i1.Mock implements _i6.AuthContext {
   @override
   void updatePhoto(String? photoUrl) => super.noSuchMethod(
     Invocation.method(#updatePhoto, [photoUrl]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void updateName(String? name) => super.noSuchMethod(
+    Invocation.method(#updateName, [name]),
     returnValueForMissingStub: null,
   );
 

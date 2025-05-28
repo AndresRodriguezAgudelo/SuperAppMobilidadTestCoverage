@@ -80,6 +80,7 @@ class DocumentTypesBloc extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Devuelve true si el vehículo se crea correctamente, o lanza una excepción con el error
   Future<bool> createVehicle({
     required String licensePlate,
     required String numberDocument,
@@ -111,7 +112,8 @@ class DocumentTypesBloc extends ChangeNotifier {
       print('\n❌ ERROR CREANDO VEHÍCULO');
       print('📡 Error: $e');
       
-      return false;
+      // Lanzar la excepción para que se maneje en el nivel superior
+      rethrow;
     }
   }
 }

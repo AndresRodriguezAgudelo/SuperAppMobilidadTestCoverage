@@ -48,8 +48,10 @@ class VehicleSelectorModal extends StatelessWidget {
     CustomModal.show(
       context: context,
       icon: Icons.info_outline,
+      iconColor: Colors.white,
       title: 'Límite alcanzado',
-      content: 'Solo puedes agregar hasta 2 vehículos. Si necesitas gestionar otro, elimina uno existente o contáctanos para más opciones',
+      content:
+          'Solo puedes agregar hasta 2 vehículos. Si necesitas gestionar otro, elimina uno existente o contáctanos para más opciones',
       buttonText: 'Aceptar',
       onButtonPressed: () => navigator.pop(),
     );
@@ -82,12 +84,34 @@ class VehicleSelectorModal extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Selecciona un vehículo',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Vehículos',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                // Botón de cierre (X)
+                InkWell(
+                  onTap: () => Navigator.of(context).pop(),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 255, 255, 255),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      size: 20,
+                      color: Color.fromARGB(255, 0, 0, 0),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             ...plates.map((plate) => RadioListTile(
@@ -101,77 +125,73 @@ class VehicleSelectorModal extends StatelessWidget {
                   },
                 )),
             const SizedBox(height: 8),
-
-            if (isLimitReached) ... [
-                            Row(
-                                children: [
-                                  Container(
-                                    width: 15,
-                                    height: 15,
-                                    margin: const EdgeInsets.only(right: 16),
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF38A8E0),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      // Usamos Center para centrar el contenido
-                                      child: Text(
-                                        'i',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color.fromARGB(
-                                              255, 255, 255, 255),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const Expanded(
-                                    // Este widget permite que el texto ocupe el espacio restante
-                                    child: Text(
-                                      'Solo puedes agregar hasta 2 vehículos. Si necesitas gestionar otro, elimina uno existente.',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: Color(0xFF6B7280),
-                                      ),
-                                      softWrap:
-                                          true, // El texto se ajusta automáticamente a varias líneas
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 8),
-
+            if (isLimitReached) ...[
+              Row(
+                children: [
+                  Container(
+                    width: 15,
+                    height: 15,
+                    margin: const EdgeInsets.only(right: 16),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF38A8E0),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      // Usamos Center para centrar el contenido
+                      child: Text(
+                        'i',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Color.fromARGB(255, 255, 255, 255),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Expanded(
+                    // Este widget permite que el texto ocupe el espacio restante
+                    child: Text(
+                      'Solo puedes agregar hasta 2 vehículos. Si necesitas gestionar otro, elimina uno existente.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF6B7280),
+                      ),
+                      softWrap:
+                          true, // El texto se ajusta automáticamente a varias líneas
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
             ],
-              
-
             Opacity(
               opacity: isLimitReached ? 0.5 : 1.0,
               child: Button(
                 text: 'Agregar vehículo',
                 action: isLimitReached
-                  ? () => _showLimitModal(context)
-                  : () async {
-                      // Cerrar el modal con una ruta nombrada para que didPopNext pueda identificarla
-                      Navigator.of(context).pop('/add_vehicle');
-                      
-                      // Navegar a la pantalla de agregar vehículo usando rootNavigator
-                      // y configurando el nombre de la ruta para que didPopNext pueda identificarla
-                      final newPlate = await Navigator.of(context, rootNavigator: true).push<String>(
-                        MaterialPageRoute(
-                          settings: const RouteSettings(name: '/add_vehicle'),
-                          builder: (ctx) => const AgregarVehiculoScreen(),
-                          fullscreenDialog: true,
-                        ),
-                      );
-                      
-                      // Si se agregó un nuevo vehículo, actualizar la UI
-                      if (newPlate != null && newPlate.isNotEmpty) {
-                        onNewPlateAdded(newPlate);
-                      }
-                    },
+                    ? () => _showLimitModal(context)
+                    : () async {
+                        // Cerrar el modal con una ruta nombrada para que didPopNext pueda identificarla
+                        Navigator.of(context).pop('/add_vehicle');
+
+                        // Navegar a la pantalla de agregar vehículo usando rootNavigator
+                        // y configurando el nombre de la ruta para que didPopNext pueda identificarla
+                        final newPlate =
+                            await Navigator.of(context, rootNavigator: true)
+                                .push<String>(
+                          MaterialPageRoute(
+                            settings: const RouteSettings(name: '/add_vehicle'),
+                            builder: (ctx) => const AgregarVehiculoScreen(),
+                            fullscreenDialog: true,
+                          ),
+                        );
+
+                        // Si se agregó un nuevo vehículo, actualizar la UI
+                        if (newPlate != null && newPlate.isNotEmpty) {
+                          onNewPlateAdded(newPlate);
+                        }
+                      },
               ),
             ),
           ],

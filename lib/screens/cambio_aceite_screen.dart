@@ -9,6 +9,8 @@ import '../BLoC/alerts/alerts_bloc.dart';
 import '../BLoC/home/home_bloc.dart';
 import '../widgets/confirmation_modales.dart';
 import '../widgets/loading.dart';
+import '../widgets/notification_card.dart';
+import '../utils/error_utils.dart';
 
 class CambioAceiteScreen extends StatefulWidget {
   final int alertId; // ID de la alerta para actualizaciones
@@ -93,12 +95,25 @@ class _CambioAceiteScreenState extends State<CambioAceiteScreen> {
         });
       }
     } catch (e) {
-      print('\n🔥 EXTINTOR_SCREEN: Error al cargar los detalles: $e');
+      print('\n🔥 CAMBIO_ACEITE_SCREEN: Error al cargar los detalles: $e');
       if (mounted) {
         setState(() {
-          errorMessage = 'Error al cargar los detalles: $e';
+          // Limpiar el mensaje de error usando ErrorUtils
+          final cleanedError = ErrorUtils.cleanErrorMessage(e);
+          errorMessage = 'Error al cargar los detalles: $cleanedError';
           isLoading = false;
         });
+        
+        // Mostrar notificación al usuario
+        NotificationCard.showNotification(
+          context: context,
+          isPositive: false,
+          icon: Icons.error_outline,
+          text: ErrorUtils.cleanErrorMessage(e),
+          date: DateTime.now(),
+          title: 'Error al cargar datos',
+          duration: const Duration(seconds: 4),
+        );
       }
     }
   }
@@ -241,12 +256,12 @@ class _CambioAceiteScreenState extends State<CambioAceiteScreen> {
             isLoading = false;
           });
 
-          // Mostrar mensaje de error con ConfirmationModal
+          // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
           showConfirmationModal(
             context,
             attitude: 0, // Negativo (error)
             label:
-                'No se pudo actualizar la alerta: ${_alertsBloc.error ?? 'Intenta nuevamente'}',
+                'No se pudo actualizar la alerta: ${ErrorUtils.cleanErrorMessage(_alertsBloc.error ?? 'Intenta nuevamente')}',
           );
         }
       }
@@ -255,12 +270,12 @@ class _CambioAceiteScreenState extends State<CambioAceiteScreen> {
         isLoading = false;
       });
 
-      // Mostrar mensaje de error con ConfirmationModal
+      // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
       if (mounted) {
         showConfirmationModal(
           context,
           attitude: 0, // Negativo (error)
-          label: 'Error al guardar: $e',
+          label: 'Error al guardar: ${ErrorUtils.cleanErrorMessage(e)}',
         );
       }
     }
@@ -503,8 +518,7 @@ class _CambioAceiteScreenState extends State<CambioAceiteScreen> {
 
                   return TopBar(
                     title: 'Cambio de Aceite',
-                    screenType: ScreenType.progressScreen,
-                    onBackPressed: () => Navigator.pop(context),
+                    screenType: ScreenType.expirationScreen, // Cambiado a expirationScreen para siempre navegar al home
                     actionItems: actionItems,
                   );
                 },
@@ -572,17 +586,31 @@ class _CambioAceiteScreenState extends State<CambioAceiteScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Mostrar la descripción de la alerta desde el bloc si está disponible
-                              Text(
-                                bloc.alertData?['description'] ??
-                                    'El cambio de aceite es clave para prolongar la vida útil de su motor, se recomienda cambia﻿rlo cada 5.000 o 10.000 kilómetros. Revise el último mantenimiento y configure esta alerta.',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF6B7280),
+                              RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'El cambio de aceite es clave para prolongar la vida útil de su motor,',
+                                    ),
+                                    TextSpan(
+                                      text: 'se recomienda cambiarlo cada 5.000 o 10.000 kilómetros',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: 'Revise el último mantenimiento y configure esta alerta.',
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 24),
                               InputDate(
-                                label: 'Fecha de ultimo mantenimiento',
+                                label: 'Fecha de último mantenimiento',
                                 value: lastUpdateDate,
                                 onChanged: (date) {
                                   print('\n📅 CAMBIO_Aceite: Nueva fecha seleccionada: $date');
@@ -607,9 +635,8 @@ class _CambioAceiteScreenState extends State<CambioAceiteScreen> {
                                       const Text(
                                         'Fecha de vencimiento',
                                         style: TextStyle(
-                                          fontSize: 14,
+                                          fontSize: 15,
                                           fontWeight: FontWeight.w500,
-                                          color: Color(0xFF6B7280),
                                         ),
                                       ),
                                       Text(
@@ -649,44 +676,23 @@ class _CambioAceiteScreenState extends State<CambioAceiteScreen> {
                                   bloc.alertData!['estado'] != 'Vencido' &&
                                   bloc.alertData!['estado'] !=
                                       'Configurar') ...[
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 15,
-                                      height: 15,
-                                      margin: const EdgeInsets.only(right: 16),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF38A8E0),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        // Usamos Center para centrar el contenido
-                                        child: Text(
-                                          'i',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Color.fromARGB(
-                                                255, 255, 255, 255),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const Expanded(
-                                      // Este widget permite que el texto ocupe el espacio restante
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.info, color: Color(0xFF38A8E0)),
+                                    SizedBox(width: 8),
+                                    Expanded(
                                       child: Text(
-                                        'Te avisaremos un dia antes y el dia de vencimiento para que no se te pase.',
+                                        'Te avisaremos un día antes y el día de vencimiento para que no se te pase.',
                                         style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF6B7280),
-                                        ),
-                                        softWrap:
-                                            true, // El texto se ajusta automáticamente a varias líneas
+                                            fontSize: 16, color: Colors.black),
                                       ),
                                     ),
                                   ],
                                 ),
+                              ),
                                 const SizedBox(height: 25),
                               ],
 

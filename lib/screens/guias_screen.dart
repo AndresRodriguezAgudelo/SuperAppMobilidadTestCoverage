@@ -140,12 +140,24 @@ class _GuiasScreenState extends State<GuiasScreen> {
                         itemCount: selectedItems.length,
                         itemBuilder: (context, index) {
                           final item = selectedItems[index];
+                          // Formatear la fecha para mostrarla en formato DD/MM/YYYY
+                          String formattedDate = item.date;
+                          try {
+                            if (item.date.isNotEmpty) {
+                              final dateTime = DateTime.parse(item.date);
+                              formattedDate = '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
+                            }
+                          } catch (e) {
+                            print('⚠️ Error al formatear la fecha: $e');
+                            // Mantener la fecha original si hay error
+                          }
+                          
                           return GuideCard(
                             title: item.name,
                             imageKey: item.keyMain,
                             secondaryImageKey: item.keySecondary,
                             videoKey: item.keyTertiaryVideo,
-                            date: '08/01/2025',
+                            date: formattedDate,
                             content: item.description,
                             tag: selectedCategory,
                           );

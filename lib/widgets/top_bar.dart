@@ -5,6 +5,7 @@ enum ScreenType {
   baseScreen,
   progressScreen,
   homeScreen,
+  expirationScreen, // Nuevo tipo para pantallas de vencimientos que siempre navegan al home
 }
 
 class TopBar extends StatefulWidget {
@@ -28,6 +29,7 @@ class TopBar extends StatefulWidget {
 }
 
 class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
+  // El método _navigateToHomeScreen se ha integrado directamente en el botón de atrás
   int _notificationCount = 0;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -82,10 +84,65 @@ class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      leading: widget.screenType == ScreenType.progressScreen
+      leading: (widget.screenType == ScreenType.progressScreen || widget.screenType == ScreenType.expirationScreen)
           ? IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: widget.onBackPressed ?? () => Navigator.pop(context),
+              onPressed: widget.onBackPressed ?? () {
+                debugPrint('\n==================================================');
+                debugPrint('TOP_BAR: Botón de atrás presionado');
+                
+                // Verificar si el widget sigue montado
+                if (!mounted) {
+                  debugPrint('TOP_BAR: Widget no montado, no se puede navegar');
+                  return;
+                }
+                
+                // Si es una pantalla de tipo expirationScreen, siempre navegar al HomeScreen
+                if (widget.screenType == ScreenType.expirationScreen) {
+                  debugPrint('TOP_BAR: Pantalla de vencimiento detectada, navegando directamente a HomeScreen');
+                  try {
+                    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                    debugPrint('TOP_BAR: Navegación a HomeScreen completada desde pantalla de vencimiento');
+                  } catch (e) {
+                    debugPrint('TOP_BAR: Error al navegar desde pantalla de vencimiento: $e');
+                    // Intento alternativo
+                    try {
+                      Navigator.of(context, rootNavigator: true).pushReplacementNamed('/home');
+                      debugPrint('TOP_BAR: Método alternativo exitoso');
+                    } catch (e2) {
+                      debugPrint('TOP_BAR: Error en método alternativo: $e2');
+                    }
+                  }
+                } 
+                // Para otros tipos de pantalla, comportamiento normal
+                else {
+                  // Verificar primero si podemos hacer pop de manera segura
+                  try {
+                    if (Navigator.canPop(context)) {
+                      debugPrint('TOP_BAR: Hay rutas en el historial, haciendo pop normal');
+                      Navigator.pop(context);
+                      debugPrint('TOP_BAR: Navigator.pop completado exitosamente');
+                    } else {
+                      debugPrint('TOP_BAR: No hay rutas en el historial, navegando a HomeScreen');
+                      // Usar Navigator.pushReplacementNamed para evitar el error de historial vacío
+                      Navigator.pushReplacementNamed(context, '/home');
+                      debugPrint('TOP_BAR: Navegación a HomeScreen completada');
+                    }
+                  } catch (e) {
+                    debugPrint('TOP_BAR: Error en navegación: $e');
+                    // Intento alternativo si falla el método principal
+                    try {
+                      debugPrint('TOP_BAR: Intentando método alternativo de navegación');
+                      Navigator.of(context, rootNavigator: true).pushReplacementNamed('/home');
+                      debugPrint('TOP_BAR: Método alternativo exitoso');
+                    } catch (e2) {
+                      debugPrint('TOP_BAR: Error en método alternativo: $e2');
+                    }
+                  }
+                }
+                
+                debugPrint('==================================================\n');
+              },
             )
           : widget.screenType == ScreenType.baseScreen
               ? IconButton(
@@ -107,12 +164,17 @@ class _TopBarState extends State<TopBar> with SingleTickerProviderStateMixin {
               fit: BoxFit.contain,
             )
           : widget.title != null
-              ? Text(widget.title!)
+              ? Text(
+                  widget.title!,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
               : null,
       backgroundColor: Colors.white,
       elevation: 0,
-      centerTitle: widget.screenType == ScreenType.progressScreen,
-      titleSpacing: widget.screenType == ScreenType.baseScreen ? 0 : NavigationToolbar.kMiddleSpacing,
+      centerTitle: false, // Siempre alineado a la izquierda
+      titleSpacing: widget.screenType == ScreenType.progressScreen ? 0 : (widget.screenType == ScreenType.baseScreen ? 0 : NavigationToolbar.kMiddleSpacing),
       actions: widget.actionItems ?? [
         if (widget.screenType == ScreenType.homeScreen || widget.screenType == ScreenType.baseScreen)
           Stack(

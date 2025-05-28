@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../confirmation_modales.dart';
 import '../inputs/input_text.dart';
 import '../../BLoC/reset_phone/reset_phone_bloc.dart';
+import '../../utils/error_utils.dart';
 
 class StepOne extends StatefulWidget {
   final Function(String, bool) onValidate;
@@ -54,7 +55,7 @@ class StepOneState extends State<StepOne> {
         widget.onValidate('', false);
         showConfirmationModal(
           context,
-          label: 'Error al enviar el código. ${_resetPhoneBloc.error ?? 'Intenta nuevamente.'}',
+          label: 'Error al enviar el código. ${ErrorUtils.cleanErrorMessage(_resetPhoneBloc.error ?? 'Intenta nuevamente.')}',
           attitude: 0,
         );
       }

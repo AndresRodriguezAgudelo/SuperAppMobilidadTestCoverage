@@ -86,6 +86,7 @@ class AuthBloc {
         _apiService.validateOTPEndpoint,
         body: {
           "otp": otp,
+          "phone": phone
         },
       );
       print('✅ Respuesta de validación: $validationResponse');

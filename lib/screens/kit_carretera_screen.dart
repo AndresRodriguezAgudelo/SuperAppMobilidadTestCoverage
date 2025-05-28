@@ -1,26 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import '../widgets/inputs/input_date.dart';
-// import '../widgets/button.dart';
-// import '../widgets/top_bar.dart';
-// import '../widgets/alertas/recordatorios_adicionales.dart';
-// import '../BLoC/alerts/alerts_bloc.dart';
-
-// class KitCarreteraScreen extends StatefulWidget {
-//   final int alertId; // ID de la alerta para actualizaciones
-
-//   const KitCarreteraScreen({
-//     super.key,
-//     required this.alertId,
-//   });
-
-//   @override
-//   State<KitCarreteraScreen> createState() => _KitCarreteraScreenState();
-// }
-
-// class _KitCarreteraScreenState extends State<KitCarreteraScreen> {
-//   late String nombreVencimiento = 'Kit de carretera';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/inputs/input_date.dart';
@@ -32,6 +9,7 @@ import '../BLoC/alerts/alerts_bloc.dart';
 import '../BLoC/home/home_bloc.dart';
 import '../widgets/confirmation_modales.dart';
 import '../widgets/loading.dart';
+import '../utils/error_utils.dart';
 
 class KitCarreteraScreen extends StatefulWidget {
   final int alertId; // ID de la alerta para actualizaciones
@@ -229,19 +207,19 @@ class _KitCarreteraScreenState extends State<KitCarreteraScreen> {
           }
 
           // Esperar un momento antes de navegar para que el modal sea visible
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted && selectedCar != null && vehicleId != null) {
-              // Navegar de regreso al home con información del vehículo seleccionado
-              Navigator.of(context).pop({
-                'success': true,
-                'vehicleId': vehicleId,
-                'licensePlate': selectedCar["licensePlate"],
-              }); // Regresar con resultado exitoso y datos del vehículo
-            } else if (mounted) {
-              // Si no tenemos datos del vehículo, regresar con éxito simple
-              Navigator.of(context).pop(true);
-            }
-          });
+         //Future.delayed(const Duration(milliseconds: 300), () {
+         //  if (mounted && selectedCar != null && vehicleId != null) {
+         //    // Navegar de regreso al home con información del vehículo seleccionado
+         //    Navigator.of(context).pop({
+         //      'success': true,
+         //      'vehicleId': vehicleId,
+         //      'licensePlate': selectedCar["licensePlate"],
+         //    }); // Regresar con resultado exitoso y datos del vehículo
+         //  } else if (mounted) {
+         //    // Si no tenemos datos del vehículo, regresar con éxito simple
+         //    Navigator.of(context).pop(true);
+         //  }
+         //});
           // No hacer pop inmediatamente para evitar doble navegación
           // Navigator.of(context).pop(true);
         } else {
@@ -249,12 +227,12 @@ class _KitCarreteraScreenState extends State<KitCarreteraScreen> {
             isLoading = false;
           });
 
-          // Mostrar mensaje de error con ConfirmationModal
+          // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
           showConfirmationModal(
             context,
             attitude: 0, // Negativo (error)
             label:
-                'No se pudo actualizar la alerta: ${_alertsBloc.error ?? 'Intenta nuevamente'}',
+                'No se pudo actualizar la alerta: ${ErrorUtils.cleanErrorMessage(_alertsBloc.error ?? 'Intenta nuevamente')}',
           );
         }
       }
@@ -263,12 +241,12 @@ class _KitCarreteraScreenState extends State<KitCarreteraScreen> {
         isLoading = false;
       });
 
-      // Mostrar mensaje de error con ConfirmationModal
+      // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
       if (mounted) {
         showConfirmationModal(
           context,
           attitude: 0, // Negativo (error)
-          label: 'Error al guardar: $e',
+          label: 'Error al guardar: ${ErrorUtils.cleanErrorMessage(e)}',
         );
       }
     }
@@ -497,8 +475,7 @@ class _KitCarreteraScreenState extends State<KitCarreteraScreen> {
 
                   return TopBar(
                     title: 'Kit de carretera',
-                    screenType: ScreenType.progressScreen,
-                    onBackPressed: () => Navigator.pop(context),
+                    screenType: ScreenType.expirationScreen, // Cambiado a expirationScreen para siempre navegar al home
                     actionItems: actionItems,
                   );
                 },
@@ -552,12 +529,26 @@ class _KitCarreteraScreenState extends State<KitCarreteraScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Mostrar la descripción de la alerta desde el bloc si está disponible
-                              Text(
-                                bloc.alertData?['description'] ??
-                                    'El Kit de Carretera es una medida de precaución que puede marcar la diferencia en una situación de emergencia.  Revíselo periódicamente configurando esta alerta.',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF6B7280),
+                              RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'El Kit de Carretera es una medida de precaución que puede marcar la diferencia en una situación de emergencia. ',
+                                    ),
+                                    TextSpan(
+                                      text: 'Revíselo periódicamente',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: ' configurando esta alerta.',
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -577,44 +568,22 @@ class _KitCarreteraScreenState extends State<KitCarreteraScreen> {
                                   bloc.alertData!['estado'] != 'Vencido' &&
                                   bloc.alertData!['estado'] !=
                                       'Configurar') ...[
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 15,
-                                      height: 15,
-                                      margin: const EdgeInsets.only(right: 16),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF38A8E0),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        // Usamos Center para centrar el contenido
-                                        child: Text(
-                                          'i',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Color.fromARGB(
-                                                255, 255, 255, 255),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const Expanded(
-                                      // Este widget permite que el texto ocupe el espacio restante
+                                                            Padding(
+                                padding: const EdgeInsets.symmetric( horizontal: 8),
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.info, color: Color(0xFF38A8E0)),
+                                    SizedBox(width: 8),
+                                    Expanded(
                                       child: Text(
-                                        'Te avisaremos un dia antes y el dia de vencimiento para que no se te pase.',
+                                        'Te avisaremos un día antes y el día de vencimiento para que no se te pase.',
                                         style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF6B7280),
-                                        ),
-                                        softWrap:
-                                            true, // El texto se ajusta automáticamente a varias líneas
+                                            fontSize: 16, color: Colors.black),
                                       ),
                                     ),
                                   ],
                                 ),
+                              ),
                                 const SizedBox(height: 25),
                               ],
 

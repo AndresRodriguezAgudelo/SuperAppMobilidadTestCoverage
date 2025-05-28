@@ -1,9 +1,24 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:Equirent_Mobility/screens/generic_alert_screen.dart';
 import '../widgets/top_bar.dart';
 import '../widgets/notification_card.dart';
+
+// Importaciones para las pantallas de vencimientos
+import '../screens/RTM_screen.dart';
+import '../screens/multas_screen.dart';
+import '../screens/SOAT_screen.dart';
+import '../screens/revision_frenos_screen.dart';
+import '../screens/extintor_screen.dart';
+import '../screens/kit_carretera_screen.dart';
+import '../screens/poliza_todo_riesgo_screen.dart';
+import '../screens/cambio_llantas_screen.dart';
+import '../screens/cambio_aceite_screen.dart';
+
+// Importaciones para los BLoCs
+import '../BLoC/home/home_bloc.dart';
 
 // Tipo para los listeners de notificaciones
 typedef NotificationCountCallback = void Function(int count);
@@ -69,15 +84,34 @@ class NotificationScreen extends StatefulWidget {
   
   // Método estático para agregar notificaciones desde cualquier parte de la app
   static void addNotification(Map<String, dynamic> notification) {
+    // Extraer expirationId, expirationType y colores si están presentes
+    final int? expirationId = notification['expirationId'];
+    final String? expirationType = notification['expirationType'];
+    final Color? backgroundColor = notification['backgroundColor'];
+    final Color? iconBackgroundColor = notification['iconBackgroundColor'];
+    final Color? textColor = notification['textColor'];
+    final bool isPositive = notification['isPositive'] ?? true; // Usar el valor que viene de la notificación
+    
+    debugPrint('NOTIFICATION_SCREEN: Recibiendo notificación con expirationId: $expirationId, expirationType: $expirationType');
+    
     // Convertir la notificación al formato esperado
     final formattedNotification = {
-      'isPositive': true, // Por defecto, considerar positiva
+      'isPositive': isPositive, // Usar el valor que viene de la notificación
       'icon': Icons.notifications,
       'text': notification['body'] ?? '',
       'date': DateTime.now(),
       'title': notification['title'] ?? 'Notificación',
       'status': 'nuevo', // Siempre nueva al crearla
       'id': DateTime.now().millisecondsSinceEpoch.toString(), // ID único
+      // Agregar campos para navegación a pantallas de vencimientos
+      'expirationId': expirationId,
+      'expirationType': expirationType,
+      // Colores personalizados
+      'backgroundColor': backgroundColor,
+      'iconBackgroundColor': iconBackgroundColor,
+      'textColor': textColor,
+      // Guardar datos adicionales que puedan ser útiles
+      'data': notification['data'],
     };
     
     // Agregar al inicio de la lista
@@ -104,6 +138,15 @@ class NotificationScreen extends StatefulWidget {
         'status': n['status'],
         'date': n['date'].millisecondsSinceEpoch,
         'id': n['id'],
+        // Guardar los nuevos campos para navegación
+        'expirationId': n['expirationId'],
+        'expirationType': n['expirationType'],
+        // Guardar los colores como valores enteros
+        'backgroundColor': n['backgroundColor'] is Color ? (n['backgroundColor'] as Color).value : null,
+        'iconBackgroundColor': n['iconBackgroundColor'] is Color ? (n['iconBackgroundColor'] as Color).value : null,
+        'textColor': n['textColor'] is Color ? (n['textColor'] as Color).value : null,
+        // Guardar datos adicionales como string JSON si existen
+        'data': n['data'] != null ? jsonEncode(n['data']) : null,
       }).toList();
       
       await prefs.setString('notifications', jsonEncode(notificationsJson));
@@ -124,6 +167,16 @@ class NotificationScreen extends StatefulWidget {
         _notifications.clear();
         
         for (var item in decodedList) {
+          // Intentar decodificar los datos adicionales si existen
+          Map<String, dynamic>? additionalData;
+          if (item['data'] != null && item['data'] is String) {
+            try {
+              additionalData = jsonDecode(item['data']);
+            } catch (e) {
+              debugPrint('Error decodificando datos adicionales: $e');
+            }
+          }
+          
           final notification = {
             'isPositive': item['isPositive'] ?? true,
             'icon': Icons.notifications,
@@ -132,6 +185,15 @@ class NotificationScreen extends StatefulWidget {
             'status': item['status'] ?? 'leido',
             'date': DateTime.fromMillisecondsSinceEpoch(item['date'] ?? 0),
             'id': item['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            // Cargar los campos para navegación
+            'expirationId': item['expirationId'],
+            'expirationType': item['expirationType'],
+            // Convertir los valores enteros de color de vuelta a objetos Color
+            'backgroundColor': item['backgroundColor'] != null ? Color(item['backgroundColor']) : null,
+            'iconBackgroundColor': item['iconBackgroundColor'] != null ? Color(item['iconBackgroundColor']) : null,
+            'textColor': item['textColor'] != null ? Color(item['textColor']) : null,
+            // Cargar datos adicionales
+            'data': additionalData,
           };
           _notifications.add(notification);
         }
@@ -191,13 +253,109 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         text: notification['text'],
                         date: notification['date'],
                         title: notification['title'],
+                        backgroundColor: notification['backgroundColor'],
+                        iconBackgroundColor: notification['iconBackgroundColor'],
+                        textColor: notification['textColor'],
                         onTap: () {
+                          // Obtener expirationId y expirationType de la notificación
+                          final int? expirationId = notification['expirationId'];
+                          final String? expirationType = notification['expirationType'];
+                          
+                          debugPrint('NOTIFICATION_SCREEN: Navegando con expirationId: $expirationId, expirationType: $expirationType');
+                          
+                          // Si no hay expirationType, usar la pantalla genérica
+                          if (expirationType == null || expirationId == null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => GenericAlertScreen(
+                                  alertId: notification['id'],
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          
+                          // Usar el expirationType para determinar a qué pantalla navegar
+                          late Widget screenWidget;
+                          
+                          // Intentar obtener el vehicleId de la notificación
+                          int? vehicleId;
+                          if (notification.containsKey('vehicleId')) {
+                            try {
+                              vehicleId = int.parse(notification['vehicleId'].toString());
+                              debugPrint('NOTIFICATION_SCREEN: Obtenido vehicleId: $vehicleId');
+                            } catch (e) {
+                              debugPrint('NOTIFICATION_SCREEN: Error al parsear vehicleId: $e');
+                            }
+                          }
+                          
+                          switch (expirationType) {
+                            case 'SOAT':
+                              debugPrint('NOTIFICATION_SCREEN: Navegando a SOATScreen con alertId: $expirationId y vehicleId: $vehicleId');
+                              screenWidget = SOATScreen(alertId: expirationId, vehicleId: vehicleId);
+                              break;
+                              
+                            case 'RTM':
+                              debugPrint('NOTIFICATION_SCREEN: Navegando a RTMScreen con alertId: $expirationId y vehicleId: $vehicleId');
+                              screenWidget = RTMScreen(alertId: expirationId, vehicleId: vehicleId);
+                              break;
+                              
+                            case 'Multas':
+                              // Aquí necesitaríamos la placa, pero no la tenemos en la notificación
+                              // Usaríamos la placa seleccionada en HomeBloc
+                              final homeBloc = Provider.of<HomeBloc>(context, listen: false);
+                              final plate = homeBloc.selectedPlate;
+                              debugPrint('NOTIFICATION_SCREEN: Navegando a MultasScreen con placa: $plate');
+                              screenWidget = MultasScreen(plate: plate);
+                              break;
+                              
+                            case 'Licencia de conducción':
+                              debugPrint('NOTIFICATION_SCREEN: Caso Licencia de conducción - No se redirecciona');
+                              // No redireccionar a ninguna pantalla
+                              return;
+                              
+                            case 'Revisión de frenos':
+                              debugPrint('NOTIFICATION_SCREEN: Navegando a RevisionFrenosScreen con alertId: $expirationId');
+                              screenWidget = RevisionFrenosScreen(alertId: expirationId);
+                              break;
+                              
+                            case 'Extintor':
+                              debugPrint('NOTIFICATION_SCREEN: Navegando a ExtintorScreen con alertId: $expirationId');
+                              screenWidget = ExtintorScreen(alertId: expirationId);
+                              break;
+                              
+                            case 'Kit de carretera':
+                              debugPrint('NOTIFICATION_SCREEN: Navegando a KitCarreteraScreen con alertId: $expirationId');
+                              screenWidget = KitCarreteraScreen(alertId: expirationId);
+                              break;
+                              
+                            case 'Póliza todo riesgo':
+                              debugPrint('NOTIFICATION_SCREEN: Navegando a PolizaTodoRiesgoScreen con alertId: $expirationId');
+                              screenWidget = PolizaTodoRiesgoScreen(alertId: expirationId);
+                              break;
+                              
+                            case 'Cambio de llantas':
+                              debugPrint('NOTIFICATION_SCREEN: Navegando a CambioLlantasScreen con alertId: $expirationId');
+                              screenWidget = CambioLlantasScreen(alertId: expirationId);
+                              break;
+                              
+                            case 'Cambio de aceite':
+                              debugPrint('NOTIFICATION_SCREEN: Navegando a CambioAceiteScreen con alertId: $expirationId');
+                              screenWidget = CambioAceiteScreen(alertId: expirationId);
+                              break;
+                              
+                            default:
+                              // Para cualquier otro tipo, usar la pantalla genérica
+                              debugPrint('NOTIFICATION_SCREEN: Tipo no reconocido: $expirationType, usando GenericAlertScreen');
+                              screenWidget = GenericAlertScreen(alertId: expirationId);
+                              break;
+                          }
+                          
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => GenericAlertScreen(
-                                alertId: notification['id'],
-                              ),
+                              builder: (context) => screenWidget,
                             ),
                           );
                         },

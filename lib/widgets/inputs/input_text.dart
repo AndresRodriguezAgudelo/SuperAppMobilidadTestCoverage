@@ -160,7 +160,7 @@ bool _validateValue(String value) {
     final Map<InputType, String> hintTexts = {
       InputType.plateCar: 'Ingresa la placa del vehículo',
       InputType.id:
-          'Ingresa el número de documento del propietario del vehículo',
+          'Ingresa el número de documento',
       InputType.email: 'Ingresa tu correo electrónico',
       InputType.text: 'Ingresa texto',
     };

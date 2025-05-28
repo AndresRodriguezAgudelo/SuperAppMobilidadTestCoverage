@@ -43,7 +43,8 @@ class StepTwoState extends State<StepTwo> {
 
     try {
       print('🔑 Validando OTP de recuperación: $_currentCode');
-      final success = await _resetPhoneBloc.validateResetOTP(_currentCode);
+      print('📧 Email asociado: ${widget.email}');
+      final success = await _resetPhoneBloc.validateResetOTP(_currentCode, email: widget.email);
       
       if (!mounted) return;
       

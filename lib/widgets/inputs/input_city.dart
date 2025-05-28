@@ -297,11 +297,17 @@ class _InputCityState extends State<InputCity> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'Buscar ciudad...',
-                      prefixIcon: const Icon(Icons.search),
+                      hintText: 'Escribe',
+                      suffixIcon: const Icon(Icons.search),
+                      filled: true,
+                      
+                      fillColor: const Color.fromRGBO(247, 247, 247, 1),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
                     onChanged: (value) {
                       _loadCiudades(search: value);

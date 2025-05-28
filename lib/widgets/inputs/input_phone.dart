@@ -211,9 +211,8 @@ class _InputPhoneState extends State<InputPhone> {
             height: 50,
             margin: const EdgeInsets.only(right: 10),
             decoration: BoxDecoration(
-              color: widget.enabled ? Colors.white : const Color.fromARGB(255, 230, 230, 230),
+              color:const Color.fromARGB(255, 245, 245, 245),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -235,9 +234,9 @@ class _InputPhoneState extends State<InputPhone> {
           child: Container(
             height: 50,
             decoration: BoxDecoration(
-              color: widget.enabled ? Colors.white : const Color.fromARGB(255, 230, 230, 230),
+              color:const Color.fromARGB(255, 245, 245, 245),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+              
             ),
             child: TextField(
               controller: _phoneController,

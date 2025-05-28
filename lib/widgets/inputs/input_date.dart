@@ -19,17 +19,21 @@ class InputDate extends StatelessWidget {
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime now = DateTime.now();
-    final DateTime sevenMonthsAgo = DateTime(now.year, now.month - 12, now.day);
+    // Definir la fecha mínima permitida (1 año atrás)
+    final DateTime firstDate = DateTime(now.year - 1, now.month, now.day);
     // Definir la fecha máxima permitida (5 años en el futuro)
-    final DateTime maxDate = DateTime.now().add(const Duration(days: 365 * 50));
+    final DateTime maxDate = DateTime.now().add(const Duration(days: 365 * 5));
     
     // Verificar si la fecha inicial es válida
     DateTime initialDate;
     if (value != null) {
-      // Si la fecha es posterior a la fecha máxima, usar la fecha máxima
+      // Verificar que la fecha esté dentro del rango permitido
       if (value!.isAfter(maxDate)) {
         print('⚠️ Fecha inicial ($value) posterior a fecha máxima ($maxDate), usando fecha máxima');
         initialDate = maxDate;
+      } else if (value!.isBefore(firstDate)) {
+        print('⚠️ Fecha inicial ($value) anterior a fecha mínima ($firstDate), usando fecha mínima');
+        initialDate = now;
       } else {
         initialDate = value!;
       }
@@ -37,12 +41,16 @@ class InputDate extends StatelessWidget {
       initialDate = now;
     }
     
+    print('📅 Selector de fecha - Fecha inicial: $initialDate, Mínima: $firstDate, Máxima: $maxDate');
+    
     try {
       final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: initialDate,
-        firstDate: sevenMonthsAgo, // Permite seleccionar desde hace 12 meses
+        firstDate: firstDate,
         lastDate: maxDate,
+        cancelText: 'CANCELAR',
+        confirmText: 'ACEPTAR',
         locale: const Locale('es', 'ES'), // Establece el idioma en español
         builder: (context, child) {
           return Theme(
@@ -93,9 +101,8 @@ class InputDate extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF1E3340),
                 ),
               ),
               if (isRequired)
@@ -116,8 +123,9 @@ class InputDate extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
+              color: const Color.fromRGBO(247, 247, 247, 1.0),
               border: Border.all(
-                color: errorText != null ? Colors.red : const Color(0xFFE5E7EB),
+                color: errorText != null ? Colors.red : const Color.fromARGB(255, 255, 255, 255),
               ),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -125,20 +133,20 @@ class InputDate extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  value != null
+                 (value != null && value!.year > 1970)
                       ? DateFormat('dd/MM/yyyy').format(value!)
-                      : 'Seleccionar fecha',
+                      : 'Selecciona',
                   style: TextStyle(
                     fontSize: 16,
                     color: value != null
                         ? const Color(0xFF1E3340)
-                        : const Color(0xFF9CA3AF),
+                        : const Color.fromARGB(255, 0, 0, 0),
                   ),
                 ),
                 const Icon(
-                  Icons.calendar_today,
-                  color: Color(0xFF9CA3AF),
-                  size: 20,
+                  Icons.calendar_today_outlined,
+                  color: Color.fromARGB(255, 35, 35, 35),
+                  size: 25,
                 ),
               ],
             ),

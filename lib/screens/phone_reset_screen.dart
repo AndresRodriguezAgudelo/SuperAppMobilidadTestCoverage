@@ -12,6 +12,7 @@ import '../widgets/resetSteps/step_four.dart';
 import '../widgets/confirmation_modales.dart';
 import '../BLoC/auth/auth_context.dart';
 import '../BLoC/reset_phone/reset_phone_bloc.dart';
+import '../utils/error_utils.dart';
 
 class PhoneResetScreen extends StatefulWidget {
   const PhoneResetScreen({super.key});
@@ -84,7 +85,7 @@ class _PhoneResetScreenState extends State<PhoneResetScreen> {
 
   void _goToHome() {
     if (!mounted) return;
-    Navigator.pushReplacementNamed(context, '/home');
+   Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
   }
 
   void _nextStep() async {
@@ -181,7 +182,7 @@ class _PhoneResetScreenState extends State<PhoneResetScreen> {
       
       showConfirmationModal(
         context,
-        label: 'Error al enviar el código. ${_resetPhoneBloc.error ?? 'Intenta nuevamente.'}',
+        label: 'Error al enviar el código. ${ErrorUtils.cleanErrorMessage(_resetPhoneBloc.error ?? 'Intenta nuevamente.')}',
         attitude: 0,
       );
     }

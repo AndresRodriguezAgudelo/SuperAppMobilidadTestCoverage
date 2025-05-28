@@ -151,19 +151,19 @@ class LeftMenu extends StatelessWidget {
           children: [
             _buildNavigationOption(
               context: context,
-              icon: Icons.directions_car,
+              icon: Icons.directions_car_filled_outlined,
               label: 'Mis vehiculos',
               screen: const MisVehiculosScreen(),
             ),
             _buildNavigationOption(
               context: context,
-              icon: Icons.description,
+              icon: Icons.map_outlined,
               label: 'Guias',
               screen: const GuiasScreen(),
             ),
             _buildNavigationOption(
               context: context,
-              icon: Icons.build,
+              icon: Icons.construction,
               label: 'Servicios',
               screen: OurServiciosScreen(),
             ),
@@ -227,7 +227,7 @@ class LeftMenu extends StatelessWidget {
             ),
             _buildNavigationOption(
               context: context,
-              icon: Icons.info,
+              icon: Icons.info_outline,
               label: 'Legal',
               screen: const LegalScreen(),
             ),
@@ -248,8 +248,8 @@ class LeftMenu extends StatelessWidget {
               barrierDismissible: false,
               builder: (BuildContext context) {
                 return CustomModal(
-                  icon: Icons.warning_sharp,
-                  iconColor: Color(0xFF2FA8E0),
+                  icon: Icons.info_outline,
+                  iconColor: Color.fromARGB(255, 255, 255, 255),
                   title: '¿Estás seguro de que deseas cerrar sesión?',
                   content:
                       'Cerrar sesión podría interrumpir tu experiencia o hacer que pierdas avances en tus gestiones',

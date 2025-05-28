@@ -6,13 +6,18 @@ import '../widgets/historialVehicular/historial_vehicular_card.dart';
 import '../widgets/inputs/input_select.dart';
 import '../widgets/historialVehicular/historial_vehicular_lista_data.dart';
 import '../BLoC/historial_vehicular/historial_vehicular_bloc.dart';
+import '../widgets/notification_card.dart';
 
 class HistorialVehicularScreen extends StatefulWidget {
   final String placa;
+  final String? mensajeNotificacion;
+  final bool esErrorNotificacion;
 
   const HistorialVehicularScreen({
     super.key,
     required this.placa,
+    this.mensajeNotificacion,
+    this.esErrorNotificacion = false,
   });
 
   @override
@@ -33,10 +38,23 @@ class _HistorialVehicularScreenState extends State<HistorialVehicularScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar datos cuando se inicia la pantalla
+    // Inicializar el bloc con la placa pero sin cargar todos los datos
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bloc = Provider.of<HistorialVehicularBloc>(context, listen: false);
-      bloc.loadHistorialVehicular(widget.placa);
+      // Solo establecer la placa, sin disparar todas las cargas
+      bloc.setPlaca(widget.placa);
+      
+      // Mostrar notificación si hay un mensaje
+      if (widget.mensajeNotificacion != null && widget.mensajeNotificacion!.isNotEmpty) {
+        NotificationCard.showNotification(
+          context: context,
+          isPositive: !widget.esErrorNotificacion,
+          icon: widget.esErrorNotificacion ? Icons.info_outline : Icons.check_circle_outline,
+          text: widget.mensajeNotificacion!,
+          title: widget.esErrorNotificacion ? 'Información' : 'Éxito',
+          duration: const Duration(seconds: 5),
+        );
+      }
     });
   }
 
@@ -135,7 +153,7 @@ class _HistorialVehicularScreenState extends State<HistorialVehicularScreen> {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Resuelva cualquier novedad de traspaso pendiente para evitar problemas legales.',
+                              'Asegúrese de resolver todas las novedades pendientes con su vehículo, evite sanciones y contratiempos.',
                               style: TextStyle(fontSize: 14, color: Color(0xFF222222)),
                             ),
                           ),
@@ -430,17 +448,22 @@ class _HistorialVehicularScreenState extends State<HistorialVehicularScreen> {
             onBackPressed: () => Navigator.pop(context),
             title: 'Historial Vehicular',
           ),
-          if (_selectedArea != 'Multas') Container(
+          if (_selectedArea == 'Historial de trámites' || _selectedArea == 'Accidentes' || _selectedArea == 'Novedades de traspaso' || _selectedArea == 'Medidas cautelares') Container(
             margin: const EdgeInsets.all(16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Última Actualización:'),
+                const Text(
+                  'Última Actualización',
+                  style: TextStyle(
+                    fontSize: 16,
+                  )
+                  ),
                 Builder(
                   builder: (context) {
                     String fecha = 'no disponible';
-                    final bloc = Provider.of<HistorialVehicularBloc>(context,
-                        listen: false);
+                    // Usar listen: true para que se actualice cuando cambien los datos
+                    final bloc = Provider.of<HistorialVehicularBloc>(context, listen: true);
                     if (_selectedArea == 'Historial de trámites') {
                       final historial = bloc.historialTramites;
                       if (historial != null &&
@@ -488,8 +511,8 @@ class _HistorialVehicularScreenState extends State<HistorialVehicularScreen> {
                     return Text(
                       fecha,
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
                       ),
                     );
                   },
@@ -522,6 +545,17 @@ class _HistorialVehicularScreenState extends State<HistorialVehicularScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Vehículo',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
                   Text(
                     widget.placa,
                     style: const TextStyle(
@@ -530,6 +564,9 @@ class _HistorialVehicularScreenState extends State<HistorialVehicularScreen> {
                     ),
                   ),
                 ],
+                )
+                ],
+              
               ),
             ),
           ),
@@ -538,12 +575,35 @@ class _HistorialVehicularScreenState extends State<HistorialVehicularScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: InputSelect(
-              label: 'Área a revisar',
+              label: 'Área',
               options: _areas,
               onChanged: (String value, bool selected) {
+                final bloc = Provider.of<HistorialVehicularBloc>(context, listen: false);
                 setState(() {
                   _selectedArea = selected ? value : null;
                 });
+                
+                // Cargar datos específicos según el área seleccionada
+                if (selected && value == 'Historial de trámites') {
+                  // Usar el método normal que ya tiene caché implementada
+                  bloc.loadHistorialTramites(widget.placa);
+                } else if (selected) {
+                  // Para las demás áreas, cargar normalmente
+                  switch (value) {
+                    case 'Multas':
+                      bloc.loadMultas(widget.placa);
+                      break;
+                    case 'Accidentes':
+                      bloc.loadAccidentes(widget.placa);
+                      break;
+                    case 'Novedades de traspaso':
+                      bloc.loadNovedadesTraspaso(widget.placa);
+                      break;
+                    case 'Medidas cautelares':
+                      bloc.loadMedidasCautelares(widget.placa);
+                      break;
+                  }
+                }
               },
             ),
           ),

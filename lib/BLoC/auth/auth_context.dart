@@ -78,6 +78,18 @@ class AuthContext extends ChangeNotifier {
     print('✅ Foto actualizada en context');
   }
   
+  // Método para actualizar solo el nombre del usuario
+  void updateName(String name) {
+    print('\n💼 ACTUALIZANDO NOMBRE EN AUTH CONTEXT');
+    print('💼 Nombre: $name');
+    
+    _name = name;
+    
+    // Notificar a todos los listeners (incluido el menú lateral)
+    notifyListeners();
+    print('✅ Nombre actualizado en context');
+  }
+  
   Future<void> clearUserData() async {
     print('\n🗑️ LIMPIANDO DATOS DE USUARIO');
 

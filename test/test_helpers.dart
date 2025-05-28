@@ -90,11 +90,40 @@ class MockAuthContext extends ChangeNotifier {
   factory MockAuthContext() => _instance;
   MockAuthContext._internal();
 }
+/// Función interna para resetear cualquier estado compartido entre tests
+/// Esto ayuda a evitar efectos secundarios entre diferentes tests
+void _resetSharedState() {
+  // Resetear cualquier singleton o estado global que pueda afectar a otros tests
+  // Por ejemplo, limpiar caches, resetear blocs, etc.
+  
+  // Resetear ImageBloc si está siendo usado
+  try {
+    final imageBloc = ImageBloc();
+    imageBloc.clearCache();
+  } catch (e) {
+    // Ignorar errores si el bloc no está inicializado
+  }
+  
+  // Resetear GuidesBloc si está siendo usado
+  try {
+    final guidesBloc = GuidesBloc();
+    guidesBloc.reset();
+  } catch (e) {
+    // Ignorar errores si el bloc no está inicializado
+  }
+  
+  // Aquí se pueden agregar más resets para otros blocs o estados globales
+}
+
+/// Configura el entorno de pruebas para manejar recursos externos y aislar cada test
 void configureTestEnvironment() {
   TestWidgetsFlutterBinding.ensureInitialized();
   
   // Desactivar mensajes de error de imágenes durante las pruebas
   PaintingBinding.instance.imageCache.maximumSize = 0;
+  
+  // Limpiar cualquier estado compartido que pueda afectar a otros tests
+  _resetSharedState();
   
   // Registrar un handler para cargar imágenes de prueba
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(

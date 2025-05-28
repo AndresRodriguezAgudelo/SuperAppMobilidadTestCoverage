@@ -62,8 +62,8 @@ class ServicioCard extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
             ),
             textAlign: TextAlign.center,
             maxLines: 2,

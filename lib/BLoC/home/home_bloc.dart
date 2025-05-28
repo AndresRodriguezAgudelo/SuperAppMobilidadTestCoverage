@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-import '../../services/API.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/auth_context.dart';
+import '../../services/API.dart';
 import '../services/services_bloc.dart';
 import '../alerts/alerts_bloc.dart';
 
@@ -30,7 +31,85 @@ class HomeBloc extends ChangeNotifier {
   void setSelectedPlate(String plate) {
     print('\n🚗 HOME_BLOC: Estableciendo placa seleccionada: $plate');
     _selectedPlate = plate;
+    
+    // Asegurarse de que la placa seleccionada existe en la lista de vehículos
+    bool plateExists = false;
+    int? vehicleId;
+    
+    for (var car in _cars) {
+      if (car['licensePlate'] == plate) {
+        plateExists = true;
+        vehicleId = car['id'];
+        break;
+      }
+    }
+    
+    if (plateExists) {
+      print('\n✅ HOME_BLOC: Placa $plate encontrada en la lista de vehículos (ID: $vehicleId)');
+      
+      // Guardar la placa seleccionada en almacenamiento persistente
+      try {
+        // Usar SharedPreferences para guardar la placa seleccionada
+        _saveSelectedPlateToStorage(plate);
+      } catch (e) {
+        print('\n⚠️ HOME_BLOC: Error al guardar placa en almacenamiento: $e');
+      }
+    } else {
+      print('\n⚠️ HOME_BLOC: Advertencia - La placa $plate no existe en la lista de vehículos');
+    }
+    
     notifyListeners();
+  }
+  
+  // Constante para la clave de SharedPreferences
+  static const String _selectedPlateKey = 'selected_plate';
+  
+  // Método para guardar la placa seleccionada en almacenamiento persistente
+  Future<void> _saveSelectedPlateToStorage(String plate) async {
+    try {
+      print('\n💾 HOME_BLOC: Guardando placa $plate en almacenamiento persistente');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_selectedPlateKey, plate);
+      print('\n✅ HOME_BLOC: Placa $plate guardada exitosamente en SharedPreferences');
+    } catch (e) {
+      print('\n⚠️ HOME_BLOC: Error guardando placa en almacenamiento: $e');
+    }
+  }
+  
+  // Método para cargar la placa seleccionada desde almacenamiento persistente
+  Future<void> loadSelectedPlateFromStorage() async {
+    try {
+      print('\n💾 HOME_BLOC: Intentando cargar placa seleccionada desde almacenamiento');
+      final prefs = await SharedPreferences.getInstance();
+      final savedPlate = prefs.getString(_selectedPlateKey);
+      
+      if (savedPlate != null && savedPlate.isNotEmpty) {
+        print('\n✅ HOME_BLOC: Placa $savedPlate cargada exitosamente desde SharedPreferences');
+        
+        // Verificar que la placa guardada exista en la lista de vehículos
+        bool plateExists = _cars.any((car) => car['licensePlate'] == savedPlate);
+        
+        if (plateExists) {
+          _selectedPlate = savedPlate;
+          print('\n🚗 HOME_BLOC: Usando placa guardada: $_selectedPlate');
+        } else if (_cars.isNotEmpty) {
+          _selectedPlate = _cars.first['licensePlate'];
+          print('\n⚠️ HOME_BLOC: La placa guardada $savedPlate ya no existe, usando primera placa: $_selectedPlate');
+          // Actualizar la placa guardada
+          _saveSelectedPlateToStorage(_selectedPlate);
+        }
+      } else if (_selectedPlate.isEmpty && _cars.isNotEmpty) {
+        _selectedPlate = _cars.first['licensePlate'];
+        print('\n🚗 HOME_BLOC: No hay placa guardada, seleccionando primera: $_selectedPlate');
+        // Guardar la placa seleccionada
+        _saveSelectedPlateToStorage(_selectedPlate);
+      }
+      
+      // Notificar a los listeners sobre el cambio
+      notifyListeners();
+    } catch (e) {
+      print('\n⚠️ HOME_BLOC: Error cargando placa desde almacenamiento: $e');
+    }
   }
   
   // Método para obtener el vehículo seleccionado
@@ -128,16 +207,23 @@ class HomeBloc extends ChangeNotifier {
 
       _cars = List<Map<String, dynamic>>.from(response['data']);
       
-      // Si no hay placa seleccionada y hay vehículos disponibles, seleccionar el primero
+      // Cargar la placa seleccionada desde el almacenamiento persistente
+      await loadSelectedPlateFromStorage();
+      
+      // Si después de cargar desde almacenamiento persistente todavía no hay placa seleccionada
       if (_selectedPlate.isEmpty && _cars.isNotEmpty) {
         _selectedPlate = _cars.first['licensePlate'];
         print('\n🚗 HOME_BLOC: Seleccionando primer vehículo automáticamente: $_selectedPlate');
+        // Guardar la selección en almacenamiento persistente
+        await _saveSelectedPlateToStorage(_selectedPlate);
       } else if (_cars.isNotEmpty) {
         // Verificar si la placa seleccionada todavía existe en la lista
         final plateExists = _cars.any((car) => car['licensePlate'] == _selectedPlate);
         if (!plateExists) {
           _selectedPlate = _cars.first['licensePlate'];
           print('\n🚗 HOME_BLOC: Placa seleccionada no existe, cambiando a: $_selectedPlate');
+          // Actualizar el almacenamiento persistente
+          await _saveSelectedPlateToStorage(_selectedPlate);
         }
       }
       print('🚗 VEHÍCULOS OBTENIDOS: ${_cars.length}');

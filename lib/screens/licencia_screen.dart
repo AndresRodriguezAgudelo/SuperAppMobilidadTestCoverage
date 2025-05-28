@@ -51,7 +51,7 @@ final dataTest = [
       categorias: [
         LicenciaCategoria(
           categoria: 'B2',
-          servicio: 'Particular',
+          servicio: 'Particul',
           status: 'Vigente',
           fechaVencimiento: DateTime(2026, 1, 21),          
           ultimaActualizacion: DateTime(2025, 1, 8, 10, 31),
@@ -96,7 +96,7 @@ class LicenciaScreen extends StatefulWidget {
   const LicenciaScreen({super.key});
   
   // Por ahora usamos a Andres
-  static final usuarioActual = dataTest[1];
+  static final usuarioActual = dataTest[0];
   
   @override
   State<LicenciaScreen> createState() => _LicenciaScreenState();

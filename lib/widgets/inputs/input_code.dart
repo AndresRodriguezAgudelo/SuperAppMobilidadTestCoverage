@@ -36,21 +36,25 @@ class _InputCodeState extends State<InputCode> {
       // Si se ingresó un dígito, mover al siguiente campo
       if (index < 3) {
         _focusNodes[index + 1].requestFocus();
-      } else {
-        // Si es el último campo, verificar si tenemos todos los dígitos
-        _checkComplete();
       }
-    } else if (value.isEmpty && index > 0) {
-      // Si se borró un dígito, mover al campo anterior
-      _focusNodes[index - 1].requestFocus();
+      // Siempre verificar el estado del código completo
+      _checkComplete();
+    } else if (value.isEmpty) {
+      // Si se borró un dígito, mover al campo anterior si no es el primero
+      if (index > 0) {
+        _focusNodes[index - 1].requestFocus();
+      }
+      // Siempre notificar el cambio en el código
+      _checkComplete();
     }
   }
 
   void _checkComplete() {
+    // Obtener el código actual, incluso si está incompleto
     String code = _controllers.map((c) => c.text).join();
-    if (code.length == 4) {
-      widget.onCompleted(code);
-    }
+    
+    // Siempre notificar el estado actual del código
+    widget.onCompleted(code);
   }
 
   @override

@@ -86,14 +86,14 @@ class GuideDetailScreen extends StatelessWidget {
                             ? Image.network(
                                 imageUrl,
                                 width: double.infinity,
-                                height: 200,
+                                //height: 300,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   print('⚠️ Error cargando imagen: $error');
                                   return Image.asset(
                                     'assets/images/image_servicio1.png',
                                     width: double.infinity,
-                                    height: 200,
+                                    //height: 300,
                                     fit: BoxFit.cover,
                                   );
                                 },
@@ -101,7 +101,7 @@ class GuideDetailScreen extends StatelessWidget {
                             : Image.asset(
                                 imageUrl,
                                 width: double.infinity,
-                                height: 200,
+                                //height: 300,
                                 fit: BoxFit.cover,
                               );
                         },

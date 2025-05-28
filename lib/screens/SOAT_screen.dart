@@ -9,12 +9,12 @@ import '../widgets/notification_card.dart';
 import '../services/API.dart';
 import '../BLoC/auth/auth_context.dart';
 import '../widgets/loading.dart';
-
+import '../utils/error_utils.dart';
 
 class SOATScreen extends StatefulWidget {
   final int? alertId;
   final int? vehicleId;
-  
+
   const SOATScreen({super.key, this.alertId, this.vehicleId});
 
   @override
@@ -22,40 +22,46 @@ class SOATScreen extends StatefulWidget {
 }
 
 class _SOATScreenState extends State<SOATScreen> {
-  List<Map<String, dynamic>> _selectedReminders = []; // Se inicializa vacío y se llenará con los datos del API
+  List<Map<String, dynamic>> _selectedReminders =
+      []; // Se inicializa vacío y se llenará con los datos del API
   late final SpecialAlertsBloc _alertsBloc;
-  
+
   @override
   void initState() {
     super.initState();
     _alertsBloc = SpecialAlertsBloc();
-    
+
     // Cargar datos cuando se inicia la pantalla
     if (widget.alertId != null) {
-      print('\n🔵🔵🔵 SOAT_SCREEN: Iniciando carga de alerta ID: ${widget.alertId} 🔵🔵🔵');
+      print(
+          '\n🔵🔵🔵 SOAT_SCREEN: Iniciando carga de alerta ID: ${widget.alertId} 🔵🔵🔵');
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         setState(() => isLoading = true);
         await _alertsBloc.loadSpecialAlert(widget.alertId!);
         setState(() => isLoading = false);
-        
+
         // Actualizar los recordatorios con los datos del API
-        if (_alertsBloc.alertData != null && _alertsBloc.alertData!.containsKey('reminders')) {
-          final apiReminders = _alertsBloc.alertData!['reminders'] as List<dynamic>;
+        if (_alertsBloc.alertData != null &&
+            _alertsBloc.alertData!.containsKey('reminders')) {
+          final apiReminders =
+              _alertsBloc.alertData!['reminders'] as List<dynamic>;
           setState(() {
             _selectedReminders = apiReminders
                 .map((reminder) => {'days': reminder['days']})
                 .toList();
           });
-          print('\n📅 SOAT_SCREEN: Recordatorios cargados del API: $_selectedReminders');
+          print(
+              '\n📅 SOAT_SCREEN: Recordatorios cargados del API: $_selectedReminders');
         } else {
-          print('\n⚠️ SOAT_SCREEN: No se encontraron recordatorios en la respuesta del API');
+          print(
+              '\n⚠️ SOAT_SCREEN: No se encontraron recordatorios en la respuesta del API');
         }
       });
     } else {
       print('\n⚠️⚠️⚠️ SOAT_SCREEN: No se proporcionó ID de alerta ⚠️⚠️⚠️');
     }
   }
-  
+
   @override
   void dispose() {
     _alertsBloc.dispose();
@@ -68,7 +74,7 @@ class _SOATScreenState extends State<SOATScreen> {
     });
   }
 
- Widget _buildInfoContainer({
+  Widget _buildInfoContainer({
     required String title,
     required String content,
     required IconData icon,
@@ -105,9 +111,8 @@ class _SOATScreenState extends State<SOATScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -125,7 +130,6 @@ class _SOATScreenState extends State<SOATScreen> {
       ),
     );
   }
-
 
   Widget _buildInfoContainer2({
     required String title,
@@ -154,7 +158,7 @@ class _SOATScreenState extends State<SOATScreen> {
             child: Icon(
               icon,
               color: Colors.white,
-              size: 20,
+              size: 24,
             ),
           ),
           Expanded(
@@ -185,280 +189,348 @@ class _SOATScreenState extends State<SOATScreen> {
     );
   }
 
-
-
-
   bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
-    print('\n🟢🟢🟢 SOAT_SCREEN: Construyendo pantalla SOAT con alertId: ${widget.alertId}');
-    
+    print(
+        '\n🟢🟢🟢 SOAT_SCREEN: Construyendo pantalla SOAT con alertId: ${widget.alertId}');
+
     return Loading(
-      isLoading: isLoading,
-      child: ChangeNotifierProvider.value(
-        value: _alertsBloc,
-      child: Consumer<SpecialAlertsBloc>(
-        builder: (context, bloc, child) {
-          print('\n🟢 SOAT_SCREEN: Estado del bloc - isLoading: ${bloc.isLoading}, hasError: ${bloc.error != null}, alertId: ${bloc.alertId}');
-          // No mostramos un loading que ocupe toda la pantalla
-          // Solo mostramos indicadores de carga localizados en los componentes que lo necesiten
-          
-          if (bloc.error != null) {
-            return Scaffold(
-              backgroundColor: Colors.white,
-              appBar: PreferredSize(
-                preferredSize: const Size.fromHeight(kToolbarHeight),
-                child: TopBar(
-                  screenType: ScreenType.progressScreen,
-                  title: 'SOAT',
-                ),
-              ),
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 48,
+        isLoading: isLoading,
+        child: ChangeNotifierProvider.value(
+          value: _alertsBloc,
+          child: Consumer<SpecialAlertsBloc>(
+            builder: (context, bloc, child) {
+              print(
+                  '\n🟢 SOAT_SCREEN: Estado del bloc - isLoading: ${bloc.isLoading}, hasError: ${bloc.error != null}, alertId: ${bloc.alertId}');
+              // No mostramos un loading que ocupe toda la pantalla
+              // Solo mostramos indicadores de carga localizados en los componentes que lo necesiten
+
+              if (bloc.error != null) {
+                return Scaffold(
+                  backgroundColor: Colors.white,
+                  appBar: PreferredSize(
+                    preferredSize: const Size.fromHeight(kToolbarHeight),
+                    child: TopBar(
+                      screenType: ScreenType.progressScreen,
+                      title: 'SOAT',
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      bloc.error!,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 16,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => widget.alertId != null ? bloc.loadSpecialAlert(widget.alertId!) : null,
-                      child: const Text('Intentar de nuevo'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-          
-          final alertData = bloc.alertData;
-          
-          // Depuración mejorada
-          print('\n📝📝📝 SOAT_SCREEN: DATOS DE ALERTA RECIBIDOS:');
-          print('ALERTA ID: ${bloc.alertId}');
-          print('TIPO DE DATOS: ${alertData?.runtimeType}');
-          print('CONTENIDO COMPLETO: $alertData');
-          print('FECHA DE EXPIRACIÓN: ${alertData?['expirationDate']}');
-          print('ASEGURADORA: ${alertData?['insurer']}');
-          print('NÚMERO DE PÓLIZA: ${alertData?['policyNumber']}');
-          print('IMAGEN BANNER: ${alertData?['imageBanner']}');
-          
-          // Verificar si la imagen existe y no está vacía
-          if (alertData != null && alertData['imageBanner'] != null) {
-            print('TIPO DE IMAGEN: ${alertData['imageBanner'].runtimeType}');
-            print('IMAGEN VACÍA: ${alertData['imageBanner'].toString().isEmpty}');
-          } else {
-            print('NO HAY IMAGEN EN LOS DATOS');
-          }
-          
-          return Scaffold(
-            backgroundColor: Colors.white,
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(kToolbarHeight),
-              child: TopBar(
-                screenType: ScreenType.progressScreen,
-                title: 'SOAT',
-                actionItems: [
-                  Container(
-                    margin: const EdgeInsets.only(right: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: bloc.getSOATStatusColor(),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 24),
-                      child: Center(
-                        child: Text(
-                          bloc.getSOATStatus(),
+                  ),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          bloc.error!,
                           style: const TextStyle(
-                            color: Color.fromARGB(221, 255, 255, 255),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                            color: Colors.red,
+                            fontSize: 16,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () => widget.alertId != null
+                              ? bloc.loadSpecialAlert(widget.alertId!)
+                              : null,
+                          child: const Text('Intentar de nuevo'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              final alertData = bloc.alertData;
+
+              // Depuración mejorada
+              print('\n📝📝📝 SOAT_SCREEN: DATOS DE ALERTA RECIBIDOS:');
+              print('ALERTA ID: ${bloc.alertId}');
+              print('TIPO DE DATOS: ${alertData?.runtimeType}');
+              print('CONTENIDO COMPLETO: $alertData');
+              print('FECHA DE EXPIRACIÓN: ${alertData?['expirationDate']}');
+              print('ASEGURADORA: ${alertData?['insurer']}');
+              print('NÚMERO DE PÓLIZA: ${alertData?['policyNumber']}');
+              print('IMAGEN BANNER: ${alertData?['imageBanner']}');
+
+              // Verificar si la imagen existe y no está vacía
+              if (alertData != null && alertData['imageBanner'] != null) {
+                print(
+                    'TIPO DE IMAGEN: ${alertData['imageBanner'].runtimeType}');
+                print(
+                    'IMAGEN VACÍA: ${alertData['imageBanner'].toString().isEmpty}');
+              } else {
+                print('NO HAY IMAGEN EN LOS DATOS');
+              }
+
+              return Scaffold(
+                backgroundColor: Colors.white,
+                appBar: PreferredSize(
+                  preferredSize: const Size.fromHeight(kToolbarHeight),
+                  child: TopBar(
+                    screenType: ScreenType.expirationScreen, // Cambiado a expirationScreen para siempre navegar al home
+                    title: 'SOAT',
+                    actionItems: [
+                      Container(
+                        margin: const EdgeInsets.only(right: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: bloc.getSOATStatusColor(),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 24),
+                          child: Center(
+                            child: Text(
+                              bloc.getSOATStatus(),
+                              style: const TextStyle(
+                                color: Color.fromARGB(221, 255, 255, 255),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            body: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      alertData?['description'] ?? 'El SOAT además de ser un requisito obligatorio, se encarga de salvaguardar la integridad física de los involucrados en un accidente de tránsito, configure esta alerta y RENUÉVELO con nosotros.',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                  _buildInfoContainer2(
-                    title: 'Número de póliza',
-                    content: alertData?['policyNumber'] ?? 'No disponible',
-                    icon: Icons.description_outlined,
-                  ),
-                  _buildInfoContainer2(
-                    title: 'Aseguradora',
-                    content: alertData?['insurer'] ?? 'No disponible',
-                    icon: Icons.business_outlined,
-                  ),
-                  _buildInfoContainer2(
-                    title: 'Fecha de vencimiento',
-                    content: alertData != null && alertData.containsKey('expirationDate') 
-                        ? bloc.formatExpirationDate(alertData['expirationDate']) 
-                        : 'No disponible',
-                    icon: Icons.calendar_today_outlined,
-                    backgroundColor: bloc.getSOATStatusSubColor(),
-                    iconBackgroundColor: bloc.getSOATStatusColor(),
-                  ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Te avisaremos un día antes y el día de vencimiento para que no se te pase.',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: RecordatoriosAdicionales(
-                selectedReminders: _selectedReminders,
-                onChanged: _onRecordatoriosChanged,
-                button: true,
-                alertId: widget.alertId,
-                expirationType: 'SOAT',
-                onSaveSuccess: () {
-                  // Recargar la alerta para mostrar los cambios actualizados
-                  if (widget.alertId != null) {
-                    bloc.loadSpecialAlert(widget.alertId!);
-                  }
-                },
-              ),
-            ),
-            SizedBox(height: 30),
-            SizedBox(
-              height: 138,
-              width: double.infinity,
-              child: BannerWidget(
-                item: BannerItem(
-                  imagePath: alertData != null && alertData['imageBanner'] != null && alertData['imageBanner'].toString().isNotEmpty
-                    ? alertData['imageBanner']
-                    : 'assets/images/BannerSOAT.png',
-                  title: '',
-                  message: '',
-                  url: 'https://apps.clientify.net/forms/simpleembed/#/forms/embedform/228575/39252',
-                ),
-              ),
-            ),
-            SizedBox(height: 30),
-            _buildInfoContainer(
-              title: '¿Renovaste tu SOAT?',
-              content: alertData != null && alertData.containsKey('updatedAt')
-                  ? 'Puedes refrescar la información manualmente a partir del ${bloc.formatExpirationDate(alertData['updatedAt'])}, un mes antes del vencimiento.'
-                  : 'Puedes refrescar la información manualmente un mes antes del vencimiento.',
-              icon: Icons.align_vertical_bottom,
-              backgroundColor: const Color(0xFFFCECDE),
-              iconBackgroundColor: const Color(0xFFF5A462),
-            ),       
-                 SizedBox(height: 30),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Última actualización',
-                        style: TextStyle(color: Colors.black54),
-                      ),
-                      if (alertData != null && alertData.containsKey('lastUpdate'))
-                        Text(
-                          bloc.formatExpirationDate(alertData['lastUpdate']),
-                          style: 
-                          const TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            ),
-                        ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Button(
-                    text: 'Refrescar información',
-                    icon: Icons.refresh,
-                    action: () async {
-                      setState(() => isLoading = true);
-                      final api = APIService();
-                      final token = AuthContext().token;
-                      try {
-                        final result = await api.reloadExpiration(
-                          'soat',
-                          token: token,
-                          expirationId: widget.alertId,
-                        );
-                        if (result['success'] == true || result['result'] == true) {
-                          if (widget.alertId != null) {
-                            await bloc.loadSpecialAlert(widget.alertId!);
-                          }
-                        } else {
-                          final message = result['message'] ?? 'No se pudo refrescar la información. Intente más tarde.';
-                          NotificationCard.showNotification(
-                            context: context,
-                            isPositive: false,
-                            icon: Icons.error_outline,
-                            text: message,
-                            date: DateTime.now(),
-                            title: 'Error al refrescar',
-                            duration: const Duration(seconds: 4),
-                          );
-                        }
-                      } catch (e) {
-                        NotificationCard.showNotification(
-                          context: context,
-                          isPositive: false,
-                          icon: Icons.error_outline,
-                          text: e.toString(),
-                          date: DateTime.now(),
-                          title: 'Error de conexión',
-                          duration: const Duration(seconds: 4),
-                        );
-                      } finally {
-                        setState(() => isLoading = false);
-                      }
-                    },
+                ),
+                body: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: 
+                        RichText(
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'El SOAT además de ser un',
+                              ),
+                              TextSpan(
+                                text: ' requisito obligatorio, ',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextSpan(
+                                text:
+                                    'se encarga de salvaguardar la integridad física de los involucrados en un accidente de tránsito, configure esta alerta y',
+                              ),
+                              TextSpan(
+                                text: ' RENUÉVELO con nosotros.',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      _buildInfoContainer2(
+                        title: 'Número de póliza',
+                        content: alertData?['policyNumber'] ?? 'No disponible',
+                        icon: Icons.directions_car_filled_outlined,
+                      ),
+                      _buildInfoContainer2(
+                        title: 'Aseguradora',
+                        content: alertData?['insurer'] ?? 'No disponible',
+                        icon: Icons.location_city_outlined,
+                      ),
+                      _buildInfoContainer2(
+                        title: 'Fecha de vencimiento',
+                        content: alertData != null &&
+                                alertData.containsKey('expirationDate')
+                            ? bloc.formatExpirationDate(
+                                alertData['expirationDate'])
+                            : 'No disponible',
+                        icon: Icons.access_time_outlined,
+                        backgroundColor: bloc.getSOATStatusSubColor(),
+                        iconBackgroundColor: bloc.getSOATStatusColor(),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 15, vertical: 7),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.info, color: Color(0xFF38A8E0)),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Te avisaremos un día antes y el día de vencimiento para que no se te pase.',
+                                
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.black),
+                                    
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 14),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: RecordatoriosAdicionales(
+                          selectedReminders: _selectedReminders,
+                          onChanged: _onRecordatoriosChanged,
+                          button: true,
+                          alertId: widget.alertId,
+                          expirationType: 'SOAT',
+                          onSaveSuccess: () {
+                            // Recargar la alerta para mostrar los cambios actualizados
+                            if (widget.alertId != null) {
+                              bloc.loadSpecialAlert(widget.alertId!);
+                            }
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 30),
+                      SizedBox(
+                        height: 138,
+                        width: double.infinity,
+                        child: BannerWidget(
+                          item: BannerItem(
+                            imagePath: alertData != null &&
+                                    alertData['imageBanner'] != null &&
+                                    alertData['imageBanner']
+                                        .toString()
+                                        .isNotEmpty
+                                ? alertData['imageBanner']
+                                : 'assets/images/BannerSOAT.png',
+                            title: '',
+                            message: '',
+                            url:
+                                'https://apps.clientify.net/forms/simpleembed/#/forms/embedform/228575/39252',
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 30),
+                      _buildInfoContainer(
+                        title: '¿Renovaste tu SOAT?',
+                        content: alertData != null &&
+                                alertData.containsKey('updatedAt')
+                            ? 'Puedes refrescar la información manualmente a partir del ${bloc.formatExpirationDate(alertData['updatedAt'])}, un mes antes del vencimiento.'
+                            : 'Puedes refrescar la información manualmente un mes antes del vencimiento.',
+                        icon: Icons.align_vertical_bottom,
+                        backgroundColor: const Color(0xFFFCECDE),
+                        iconBackgroundColor: const Color(0xFFF5A462),
+                      ),
+                      SizedBox(height: 30),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Última actualización',
+                                  style: TextStyle(
+                                                                          color: Colors.black,
+                                      fontSize: 15,
+                                    ),
+                                ),
+                                if (alertData != null &&
+                                    alertData.containsKey('lastUpdate'))
+                                  Text(
+                                    bloc.formatExpirationDate(
+                                        alertData['lastUpdate']),
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Button(
+                              text: 'Refrescar información',
+                              icon: Icons.refresh,
+                              action: () async {
+                                setState(() => isLoading = true);
+                                final api = APIService();
+                                final token = AuthContext().token;
+                                try {
+                                  // Verificar los valores que se están pasando
+                                  debugPrint('\n💾 SOAT_SCREEN: Valores antes de la llamada:');
+                                  debugPrint('- alertId: ${widget.alertId}');
+                                  debugPrint('- vehicleId: ${widget.vehicleId}');
+                                  
+                                  // Construir el endpoint para mostrar en los logs
+                                  final endpointPath = api.getReloadExpirationEndpoint(
+                                    'soat',
+                                    expirationId: widget.alertId,
+                                    vehicleId: widget.vehicleId,
+                                  );
+                                  debugPrint('\n🔗 URL del endpoint: $endpointPath');
+                                  
+                                  final result = await api.reloadExpiration(
+                                    'soat',
+                                    token: token,
+                                    expirationId: widget.alertId,
+                                    vehicleId: widget.vehicleId, // Incluir el ID del vehículo
+                                  );
+                                  if (result['success'] == true ||
+                                      result['result'] == true) {
+                                    if (widget.alertId != null) {
+                                      await bloc
+                                          .loadSpecialAlert(widget.alertId!);
+                                    }
+                                  } else {
+                                    final message = result['message'] ??
+                                        'No se pudo refrescar la información. Intente más tarde.';
+                                    NotificationCard.showNotification(
+                                      context: context,
+                                      isPositive: false,
+                                      icon: Icons.error_outline,
+                                      text: message,
+                                      date: DateTime.now(),
+                                      title: 'Error al refrescar',
+                                      duration: const Duration(seconds: 4),
+                                    );
+                                  }
+                                } catch (e) {
+                                  // Limpiar el mensaje de error usando ErrorUtils
+                                  final cleanedError =
+                                      ErrorUtils.cleanErrorMessage(e);
+
+                                  NotificationCard.showNotification(
+                                    context: context,
+                                    isPositive: false,
+                                    icon: Icons.error_outline,
+                                    text: cleanedError,
+                                    date: DateTime.now(),
+                                    title: 'Error de conexión',
+                                    duration: const Duration(seconds: 4),
+                                  );
+                                } finally {
+                                  setState(() => isLoading = false);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 50),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            SizedBox(height: 50),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    ));
+                ),
+              );
+            },
+          ),
+        ));
   }
 }

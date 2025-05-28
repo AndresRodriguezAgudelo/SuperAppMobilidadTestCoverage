@@ -5,6 +5,10 @@ import '../auth/auth_context.dart';
 class HistorialVehicularBloc extends ChangeNotifier {
   final APIService _apiService = APIService();
   final AuthContext _authContext = AuthContext();
+  
+  // Control de caché para evitar múltiples llamadas
+  DateTime? _lastTramitesLoadTime;
+  final _cacheValidityDuration = const Duration(minutes: 5); // Caché válida por 5 minutos
 
   // Estados para cada tipo de historial
   Map<String, dynamic>? _historialTramites;
@@ -67,6 +71,12 @@ class HistorialVehicularBloc extends ChangeNotifier {
       _errorMedidas;
 
   String? get placa => _placa;
+  
+  // Método para establecer la placa sin iniciar cargas
+  void setPlaca(String placa) {
+    _placa = placa;
+    notifyListeners();
+  }
 
   // Método para iniciar todas las cargas (pero de forma independiente)
   Future<void> loadHistorialVehicular(String placa) async {
@@ -91,6 +101,13 @@ class HistorialVehicularBloc extends ChangeNotifier {
 
   // Métodos individuales para cargar cada tipo de datos
   Future<void> loadHistorialTramites(String placa) async {
+    // Si ya tenemos datos y la caché es válida, no volver a cargar
+    if (_historialTramites != null && 
+        _lastTramitesLoadTime != null &&
+        DateTime.now().difference(_lastTramitesLoadTime!) < _cacheValidityDuration) {
+      return;
+    }
+    
     if (_isLoadingTramites) return;
 
     try {
@@ -99,6 +116,7 @@ class HistorialVehicularBloc extends ChangeNotifier {
       notifyListeners();
 
       await _loadHistorialTramites(placa);
+      _lastTramitesLoadTime = DateTime.now(); // Actualizar tiempo de carga
     } catch (e) {
       print('\n❌ ERROR CARGANDO HISTORIAL DE TRÁMITES');
       print('📡 Error: $e');
@@ -189,16 +207,26 @@ class HistorialVehicularBloc extends ChangeNotifier {
   Future<dynamic> _loadHistorialTramites(String placa) async {
     try {
       final endpoint = _apiService.getVehicleHistoryEndpoint(placa);
+      print('\n📡 Llamando al endpoint de historial de trámites: $endpoint');
       final response = await _apiService.get(
         endpoint,
         token: _authContext.token,
       );
       _historialTramites = response;
+      print('\n✅ Datos de historial de trámites recibidos correctamente');
       return response;
     } catch (e) {
+      print('\n❌ Error cargando historial de trámites: $e');
       _historialTramites = null;
       return e;
     }
+  }
+  
+  // Método para forzar la recarga del historial de trámites (útil para pull-to-refresh)
+  Future<void> forceReloadHistorialTramites(String placa) async {
+    print('\n🔄 Forzando recarga de historial de trámites');
+    _lastTramitesLoadTime = null; // Invalidar caché
+    return loadHistorialTramites(placa);
   }
 
   Future<dynamic> _loadMultas(String placa) async {
@@ -301,10 +329,10 @@ class HistorialVehicularBloc extends ChangeNotifier {
 
     final transfer = _novedadesTraspaso!['transferHistory'];
     return [
-      {'label': 'Prenda', 'value': transfer['pledge'] ? false : true},
-      { 'label': 'Medidas cautelares', 'value': transfer['precautionaryMeasures'] ? false : true },
-      {'label': 'SOAT vigente', 'value': transfer['soatActive'] ? false : true},
-      {'label': 'RTM', 'value': transfer['rtmStatus'] ? false : true},
+      {'label': 'Prenda', 'value': transfer['pledge']},
+      { 'label': 'Medidas cautelares', 'value': transfer['precautionaryMeasures'] },
+      {'label': 'SOAT vigente', 'value': transfer['soatActive']},
+      {'label': 'RTM', 'value': transfer['rtmStatus']},
     ];
   }
 
@@ -324,7 +352,7 @@ class HistorialVehicularBloc extends ChangeNotifier {
 
       bool customParse(dynamic value) {
         if (value is String && value == 'No disponible') return true;
-        if (value is bool) return !value;
+        if (value is bool) return value;
         return false; // fallback para valores nulos o inesperados
       }
 

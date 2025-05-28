@@ -204,7 +204,7 @@ class _MiPerfilScreenState extends State<MiPerfilScreen> {
                           value,
                           style: const TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w800,
                           ),
                           overflow: TextOverflow.ellipsis, // Corta con "..."
                           maxLines: 1, // Solo una línea
@@ -250,14 +250,15 @@ class _MiPerfilScreenState extends State<MiPerfilScreen> {
   void _handleDeleteAccount() {
     CustomModal.show(
       context: context,
-      icon: Icons.info,
-      iconColor: Colors.red,
+      icon: Icons.info_outline,
+      iconColor: Colors.white,
+      backgroundIconColor: Color.fromRGBO(224, 92, 58, 1.0),
       title: '¿Estás seguro de que deseas eliminar tu cuenta?',
       content:
           'Eliminar tu cuenta borrará toda tu información de forma permanente y no podrás recuperarla',
       buttonText: 'Eliminar cuenta',
-      buttonColor: Colors.red,
-      labelSecondButtonColor: Colors.red,
+      buttonColor: Color.fromRGBO(224, 92, 58, 1.0),
+      labelSecondButtonColor: Color.fromRGBO(224, 92, 58, 1.0),
       secondButtonColor: Colors.white,
       secondButtonText: 'Cancelar',
       onButtonPressed: () async {
@@ -275,6 +276,7 @@ class _MiPerfilScreenState extends State<MiPerfilScreen> {
             CustomModal.show(
               context: context,
               icon: Icons.check_circle,
+              iconColor: Colors.white,
               title: 'Cuenta eliminada',
               content: 'Tu cuenta ha sido eliminada exitosamente.',
               buttonText: 'Aceptar',
@@ -291,7 +293,8 @@ class _MiPerfilScreenState extends State<MiPerfilScreen> {
             CustomModal.show(
               context: context,
               icon: Icons.error,
-              iconColor: Colors.red,
+              iconColor: Colors.white,
+              backgroundIconColor: Colors.red,
               title: 'Error',
               content:
                   'No se pudo eliminar la cuenta. Por favor, intenta de nuevo más tarde.',
@@ -371,7 +374,7 @@ class _MiPerfilScreenState extends State<MiPerfilScreen> {
                           _buildProfileInfoItem(
                             icon: Icons.phone_android_outlined,
                             label: 'Celular',
-                            value: profileBloc.phone,
+                            value: '+57 ${profileBloc.phone}',
                             field: EditProfileField.phone,
                           ),
                           _buildProfileInfoItem(

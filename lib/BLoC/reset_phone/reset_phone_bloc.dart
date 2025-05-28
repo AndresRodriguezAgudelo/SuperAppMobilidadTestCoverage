@@ -44,22 +44,37 @@ class ResetPhoneBloc {
   }
   
   // Método para validar el código OTP de recuperación
-  Future<bool> validateResetOTP(String otp) async {
+  Future<bool> validateResetOTP(String otp, {String? email}) async {
     _isLoading = true;
     _error = null;
     
     try {
       print('\n🔑 VALIDANDO CÓDIGO OTP PARA RECUPERACIÓN');
       print('🔑 OTP: $otp');
+      print('📧 Email: $email');
+      
+      // Crear el body con OTP y email
+      final Map<String, dynamic> body = {
+        "otp": otp,
+      };
+      
+      // Añadir email si está disponible
+      if (email != null && email.isNotEmpty) {
+        body["email"] = email;
+      }
+      
+      print('\n📦 CUERPO DE LA PETICIÓN ENVIADO:');
+      print(body);
       
       final response = await _apiService.post(
         '/otp/validate/reset',
-        body: {
-          "otp": otp,
-        },
+        body: body,
       );
       
-      print('✅ Respuesta de validación: $response');
+      print('\n✅ RESPUESTA COMPLETA DE VALIDACIÓN:');
+      print(response);
+      print('\n🔍 TIPO DE RESPUESTA: ${response.runtimeType}');
+      print('\n🔍 CONTENIDO DE RESPUESTA JSON: ${response.toString()}');
       
       // Guardar el userId para usarlo en el siguiente paso
       _userId = response['userId'];

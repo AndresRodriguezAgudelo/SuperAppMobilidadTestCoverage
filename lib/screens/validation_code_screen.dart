@@ -1,11 +1,12 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
-import '../widgets/button.dart';
-import '../widgets/top_bar.dart';
-import '../widgets/inputs/input_code.dart';
-import '../BLoC/auth/auth.dart';
-import '../BLoC/home/home_bloc.dart';
-import '../widgets/confirmation_modales.dart'; // Agregado import del widget InputCode
+import "dart:async";
+import "package:flutter/material.dart";
+import "../widgets/button.dart";
+import "../widgets/top_bar.dart";
+import "../widgets/inputs/input_code.dart";
+import "../BLoC/auth/auth.dart";
+import "../BLoC/home/home_bloc.dart";
+import "../widgets/confirmation_modales.dart"; // Agregado import del widget InputCode
+import "../utils/error_utils.dart";
 
 class ValidationCodeScreen extends StatefulWidget {
   const ValidationCodeScreen({super.key});
@@ -24,6 +25,8 @@ class _ValidationCodeScreenState extends State<ValidationCodeScreen> {
   bool _isValidating = false;
   String? _code;
   Timer? _timer;
+  
+  // Ya no necesitamos esta función local, usaremos ErrorUtils.cleanErrorMessage
   
   void startTimer() {
     _timer?.cancel();
@@ -56,14 +59,29 @@ class _ValidationCodeScreenState extends State<ValidationCodeScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final Map<String, dynamic> args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
-    phoneNumber = args['phone'] ?? '';
-    userName = args['user'] ?? 'Usuario';
+    // Verificar si los argumentos son nulos antes de hacer el cast
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    if (arguments != null && arguments is Map<String, dynamic>) {
+      final Map<String, dynamic> args = arguments;
+      phoneNumber = args['phone'] ?? '';
+      userName = args['user'] ?? 'Usuario';
+    } else {
+      // Valores por defecto si no hay argumentos
+      phoneNumber = '';
+      userName = 'Usuario';
+      print('⚠️ ADVERTENCIA: No se recibieron argumentos en ValidationCodeScreen');
+    }
   }
 
   Future<void> _validateCode() async {
-    if (_isValidating || _code == null) return;
+    // Verificación más estricta: el código debe existir y tener exactamente 4 dígitos
+    // Además, evitamos peticiones duplicadas verificando _isValidating
+    if (_isValidating || _code == null || _code!.length != 4) {
+      print('❌ VALIDACIÓN CANCELADA: ${_isValidating ? "Ya hay una validación en curso" : "Código inválido"}');
+      return;
+    }
 
+    print('🔑 INICIANDO VALIDACIÓN de código: $_code');
     setState(() => _isValidating = true);
 
     try {
@@ -93,14 +111,16 @@ class _ValidationCodeScreenState extends State<ValidationCodeScreen> {
       if (!mounted) return;
 
       // Navegar al home
-      Navigator.pushReplacementNamed(context, '/home');
+     Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     } catch (e) {
       print('❌ Error en validación/login: $e');
       if (!mounted) return;
 
+      final cleanedError = ErrorUtils.cleanErrorMessage(e);
+
       showConfirmationModal(
         context,
-        label: 'Error de autenticación. Por favor intenta nuevamente.',
+        label: cleanedError,
         attitude: 0,
       );
     } finally {
@@ -128,11 +148,13 @@ class _ValidationCodeScreenState extends State<ValidationCodeScreen> {
 
       startTimer();
     } catch (e) {
+      print('❌ Error al reenviar el código: $e');
       if (!mounted) return;
 
+      final cleanedError = ErrorUtils.cleanErrorMessage(e);
       showConfirmationModal(
         context,
-        label: 'Error al reenviar el código',
+        label: cleanedError,
         attitude: 0,
       );
     } finally {
@@ -144,7 +166,8 @@ class _ValidationCodeScreenState extends State<ValidationCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool canValidate = _code?.length == 4;
+    // Verificar que el código tenga exactamente 4 dígitos para habilitar la validación
+    final bool canValidate = _code != null && _code!.length == 4;
     final bool canResend = remainingTime == 0 && !canValidate;
 
     return Scaffold(
@@ -163,25 +186,38 @@ class _ValidationCodeScreenState extends State<ValidationCodeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Hola ${userName.split(' ')[0]},',
-                    style: const TextStyle(
+                     'Hola!',
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Te damos la bienvenida nuevamente',
+                  'Te damos la bienvenida nuevamente',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    'Te enviamos un código de 4 dígitos por SMS al número de teléfono $phoneNumber',
-                    style: const TextStyle(
-                      fontSize: 16,
+                 RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                      children: [
+                        const TextSpan(
+                          text: 'Te enviamos un código de 4 dígitos por SMS al número de teléfono ',
+                        ),
+                        TextSpan(
+                          text: '+57 $phoneNumber',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 32),

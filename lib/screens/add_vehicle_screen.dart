@@ -9,6 +9,7 @@ import '../widgets/notification_card.dart';
 import '../BLoC/document_types/document_types_bloc.dart';
 import '../BLoC/home/home_bloc.dart';
 import '../BLoC/alerts/alerts_bloc.dart';
+import '../utils/error_utils.dart';
 import 'simple_loading_screen.dart';
 import 'my_vehicles_screen.dart';
 
@@ -96,7 +97,6 @@ class _AgregarVehiculoScreenState extends State<AgregarVehiculoScreen> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF1E5E9E),
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -197,9 +197,9 @@ class _AgregarVehiculoScreenState extends State<AgregarVehiculoScreen> {
                                         () async {
                                           try {
                                             // Llamar a createVehicle sin actualizar el estado internamente
-                                            final success =
-                                                await _documentTypesBloc
-                                                    .createVehicle(
+                                            // Ahora createVehicle lanzará una excepción si hay un error
+                                            await _documentTypesBloc
+                                                .createVehicle(
                                               licensePlate:
                                                   _placa.toUpperCase(),
                                               numberDocument: _numeroDocumento,
@@ -207,12 +207,8 @@ class _AgregarVehiculoScreenState extends State<AgregarVehiculoScreen> {
                                                   _tipoDocumento!['id'],
                                             );
                                             
-                                            // Actualizar el estado después de la operación
+                                            // Actualizar el estado después de la operación exitosa
                                             _documentTypesBloc.finishVehicleCreation();
-                                            
-                                            if (!success) {
-                                              return 'Error creando vehículo';
-                                            }
                                             final homeBloc =
                                                 Provider.of<HomeBloc>(ctx,
                                                     listen: false);
@@ -261,11 +257,14 @@ class _AgregarVehiculoScreenState extends State<AgregarVehiculoScreen> {
                                         if (error != null) {
                                           WidgetsBinding.instance
                                               .addPostFrameCallback((_) {
+                                            // Limpiar el mensaje de error usando ErrorUtils
+                                            final cleanedError = ErrorUtils.cleanErrorMessage(error);
+                                            
                                             NotificationCard.showNotification(
                                               context: context,
                                               isPositive: false,
                                               icon: Icons.error,
-                                              text: error.toString(),
+                                              text: cleanedError,
                                               date: DateTime.now(),
                                               title:
                                                   'Error al agregar vehículo',

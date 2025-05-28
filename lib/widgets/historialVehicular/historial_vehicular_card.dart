@@ -34,12 +34,9 @@ class _HistorialVehicularCardState extends State<HistorialVehicularCard> {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(
-      locale: 'es_CO',
-      symbol: '\$',
-      decimalDigits: 0,
-      customPattern: '\$',
-    );
+    // Formato personalizado para asegurar que el símbolo $ aparezca antes del valor
+    final currencyFormat = NumberFormat('#,###', 'es_CO');
+    final currencySymbol = '\$';
 
     // Si es multa, usamos el nuevo diseño expansible
     if (widget.isMulta) {
@@ -143,9 +140,7 @@ class _HistorialVehicularCardState extends State<HistorialVehicularCard> {
                             style: const TextStyle(fontSize: 13),
                           ),
                           Text(
-                            currencyFormat
-                                .format(widget.data?['valorPagar'] ?? 0)
-                                .toString(),
+                            '$currencySymbol ${currencyFormat.format(widget.data?['valorPagar'] ?? 0)}',
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,

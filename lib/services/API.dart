@@ -5,7 +5,8 @@ import 'dart:io';
 import 'dart:math' as math;
 
 class Environment {
-  static const String localPujol = 'https://9a98-181-51-33-125.ngrok-free.app/api/sign/v1';
+
+  static const String localPujol = 'https://widespread-rated-oo-labour.trycloudflare.com/api/sign/v1';
   static const String azure = 'https://equirentappbackend-dev-f9e9d0geh6dgdkeu.eastus2-01.azurewebsites.net/api/sign/v1';
 }
 
@@ -119,15 +120,19 @@ class APIService {
 
 
   // Expiration reload endpoint
-  String getReloadExpirationEndpoint(String name, {int? expirationId}) {
+  String getReloadExpirationEndpoint(String name, {int? expirationId, int? vehicleId}) {
+
     if (expirationId != null) {
+      if (vehicleId != null) {
+        return '/expiration/reload-expiration/$name/$expirationId/$vehicleId';
+      }
       return '/expiration/reload-expiration/$name/$expirationId';
     }
     return '/expiration/reload-expiration/$name';
   }
 
-  Future<Map<String, dynamic>> reloadExpiration(String name, {String? token, int? expirationId}) async {
-    final endpoint = getReloadExpirationEndpoint(name, expirationId: expirationId);
+  Future<Map<String, dynamic>> reloadExpiration(String name, {String? token, int? expirationId, int? vehicleId}) async {
+    final endpoint = getReloadExpirationEndpoint(name, expirationId: expirationId, vehicleId: vehicleId);
     return await get(endpoint, token: token);
   }
 

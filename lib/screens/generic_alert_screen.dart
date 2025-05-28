@@ -11,6 +11,7 @@ import '../BLoC/home/home_bloc.dart';
 import '../widgets/confirmation_modales.dart';
 import '../widgets/modales.dart';
 import '../widgets/loading.dart';
+import '../utils/error_utils.dart';
 
 class GenericAlertScreen extends StatefulWidget {
   final int alertId; // ID de la alerta para actualizaciones
@@ -148,18 +149,18 @@ class _GenericAlertScreenState extends State<GenericAlertScreen> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return CustomModal(
-          icon: Icons.info,
-          iconColor: Color(0xFF0E5D9E),
+          icon: Icons.info_outline,
+          iconColor: Color.fromARGB(255, 255, 255, 255),
           title: '¿Estás seguro de que deseas eliminar este vencimiento?',
           content: 'Esta acción no se puede deshacer',
-          buttonText: 'Cancelar',
-          secondButtonText: 'Eliminar',
+          buttonText: 'Confirmar',
+          secondButtonText: 'Cancelar',
           secondButtonColor: const Color.fromARGB(255, 255, 255, 255),
           labelSecondButtonColor: Color(0xFF2FA8E0),
-          onButtonPressed: () {
+          onSecondButtonPressed: () {
             Navigator.of(context).pop();
           },
-          onSecondButtonPressed: () {
+          onButtonPressed: () {
             confirmDelete = true;
             Navigator.of(context).pop();
           },
@@ -269,12 +270,12 @@ class _GenericAlertScreenState extends State<GenericAlertScreen> {
           });
           Navigator.pop(context, true);
         } else {
-          // Mostrar mensaje de error
+          // Mostrar mensaje de error con mensaje limpio
           showConfirmationModal(
             context,
             attitude: 0, // Negativo (error)
             label:
-                'No se pudo eliminar el vencimiento: ${_alertsBloc.error ?? 'Intenta nuevamente'}',
+                'No se pudo eliminar el vencimiento: ${ErrorUtils.cleanErrorMessage(_alertsBloc.error ?? 'Intenta nuevamente')}',
           );
         }
       }
@@ -284,11 +285,11 @@ class _GenericAlertScreenState extends State<GenericAlertScreen> {
           isLoading = false;
         });
 
-        // Mostrar mensaje de error
+        // Mostrar mensaje de error con mensaje limpio
         showConfirmationModal(
           context,
           attitude: 0, // Negativo (error)
-          label: 'Error al eliminar el vencimiento: $e',
+          label: 'Error al eliminar el vencimiento: ${ErrorUtils.cleanErrorMessage(e)}',
         );
       }
     }
@@ -428,12 +429,12 @@ class _GenericAlertScreenState extends State<GenericAlertScreen> {
             isLoading = false;
           });
 
-          // Mostrar mensaje de error con ConfirmationModal
+          // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
           showConfirmationModal(
             context,
             attitude: 0, // Negativo (error)
             label:
-                'No se pudo actualizar la alerta: ${_alertsBloc.error ?? 'Intenta nuevamente'}',
+                'No se pudo actualizar la alerta: ${ErrorUtils.cleanErrorMessage(_alertsBloc.error ?? 'Intenta nuevamente')}',
           );
         }
       }
@@ -442,12 +443,12 @@ class _GenericAlertScreenState extends State<GenericAlertScreen> {
         isLoading = false;
       });
 
-      // Mostrar mensaje de error con ConfirmationModal
+      // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
       if (mounted) {
         showConfirmationModal(
           context,
           attitude: 0, // Negativo (error)
-          label: 'Error al guardar: $e',
+          label: 'Error al guardar: ${ErrorUtils.cleanErrorMessage(e)}',
         );
       }
     }
@@ -699,8 +700,7 @@ class _GenericAlertScreenState extends State<GenericAlertScreen> {
 
                   return TopBar(
                     title: nombreVencimiento,
-                    screenType: ScreenType.progressScreen,
-                    onBackPressed: () => Navigator.pop(context),
+                    screenType: ScreenType.expirationScreen, // Cambiado a expirationScreen para siempre navegar al home
                     actionItems: actionItems,
                   );
                 },
@@ -783,14 +783,29 @@ class _GenericAlertScreenState extends State<GenericAlertScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Mostrar la descripción de la alerta desde el bloc si está disponible
-                              Text(
-                                'Configure esta alerta personalizada con algún requisito que necesite renovar de forma periódica, nosotros le avi﻿samos.',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF6B7280),
-                                ),
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'Configure esta alerta personalizada',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(height: 10),
+                            ),
+                            TextSpan(
+                              text: ' con algún requisito que necesite renovar de forma periódica, nosotros le avisamos.',
+                              style: const TextStyle(),
+                            ),
+                          ],
+                        ),
+                      ),
+
+
+                              const SizedBox(height: 25),
 
                               // ignore: avoid_print
 
@@ -824,44 +839,23 @@ class _GenericAlertScreenState extends State<GenericAlertScreen> {
                                   bloc.alertData!['estado'] != 'Vencido' &&
                                   bloc.alertData!['estado'] !=
                                       'Configurar') ...[
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 15,
-                                      height: 15,
-                                      margin: const EdgeInsets.only(right: 16),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF38A8E0),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        // Usamos Center para centrar el contenido
-                                        child: Text(
-                                          'i',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Color.fromARGB(
-                                                255, 255, 255, 255),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const Expanded(
-                                      // Este widget permite que el texto ocupe el espacio restante
-                                      child: Text(
-                                        'Te avisaremos un dia antes y el dia de vencimiento para que no se te pase.',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF6B7280),
-                                        ),
-                                        softWrap:
-                                            true, // El texto se ajusta automáticamente a varias líneas
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 15),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.info, color: Color(0xFF38A8E0)),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Te avisaremos un día antes y el día de vencimiento para que no se te pase.',
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.black),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                                 const SizedBox(height: 25),
                               ],
 
@@ -885,7 +879,7 @@ class _GenericAlertScreenState extends State<GenericAlertScreen> {
                                   bloc.alertData!['estado'] != 'Vencido' &&
                                   bloc.alertData!['estado'] !=
                                       'Configurar') ...[
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 1),
                                 RecordatoriosAdicionales(
                                   selectedReminders: selectedReminders,
                                   onChanged: (reminders) {

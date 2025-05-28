@@ -149,7 +149,7 @@ class _PicoPlacaState extends State<PicoPlaca>
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.calendar_today,
+                    Icons.calendar_today_outlined,
                     color: Colors.white,
                   ),
                 ),
@@ -158,7 +158,7 @@ class _PicoPlacaState extends State<PicoPlaca>
                   formattedMonthYear,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
@@ -169,13 +169,55 @@ class _PicoPlacaState extends State<PicoPlaca>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Text('Dom'),
-                Text('Lun'),
-                Text('Mar'),
-                Text('Mié'),
-                Text('Jue'),
-                Text('Vie'),
-                Text('Sáb'),
+                Text(
+                  'Dom',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16
+                  )
+                ),
+                Text(
+                  'Lun',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16
+                  )
+                ),
+                Text(
+                  'Mar',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16
+                  )
+                ),
+                Text(
+                  'Mié',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16
+                  )
+                ),
+                Text(
+                  'Jue',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16
+                  )
+                ),
+                Text(
+                  'Vie',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16
+                  )
+                ),
+                Text(
+                  'Sáb',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16
+                  )
+                ),
               ],
             ),
           ),

@@ -22,63 +22,7 @@ class _OurServiciosScreenState extends State<OurServiciosScreen> {
     });
   }
 
-  /* Lista de prueba removida
-  final List<Map<String, String>> servicios = [
-    {
-      'title': 'La Libertad CarSharing',
-      'subtitle': 'Alquiler de vehículos por horas o días',
-      'imageUrl': 'assets/images/image_servicio4.png',
-      'url': 'https://www.equirent.com.co/home/la-libertad-carsharing/',
-    },
-    {
-      'title': 'Renting Corporativo',
-      'subtitle': 'Soluciones de movilidad para empresas',
-      'imageUrl': 'assets/images/image_servicio4.png',
-      'url': 'https://www.equirent.com.co/home/la-libertad-carsharing/',
-    },
-    {
-      'title': 'Renting Personal',
-      'subtitle': 'Tu vehículo con todo incluido',
-      'imageUrl': 'assets/images/image_servicio4.png',
-      'url': 'https://www.equirent.com.co/home/la-libertad-carsharing/',
-    },
-    {
-      'title': 'Mantenimiento Premium',
-      'subtitle': 'Servicio técnico especializado',
-      'imageUrl': 'assets/images/image_servicio4.png',
-      'url': 'https://www.equirent.com.co/home/la-libertad-carsharing/',
-    },
-    {
-      'title': 'Seguros Todo Riesgo',
-      'subtitle': 'Protección completa para tu vehículo',
-      'imageUrl': 'assets/images/image_servicio4.png',
-      'url': 'https://www.equirent.com.co/home/la-libertad-carsharing/',
-    },
-    {
-      'title': 'Asistencia 24/7',
-      'subtitle': 'Soporte técnico en cualquier momento',
-      'imageUrl': 'assets/images/image_servicio4.png',
-      'url': 'https://www.equirent.com.co/home/la-libertad-carsharing/',
-    },
-    {
-      'title': 'Vehículos Eléctricos',
-      'subtitle': 'Movilidad sostenible y eficiente',
-      'imageUrl': 'assets/images/image_servicio4.png',
-      'url': 'https://www.equirent.com.co/home/la-libertad-carsharing/',
-    },
-    {
-      'title': 'Flotas Empresariales',
-      'subtitle': 'Gestión integral de flotas',
-      'imageUrl': 'assets/images/image_servicio4.png',
-      'url': 'https://www.equirent.com.co/home/la-libertad-carsharing/',
-    },
-    {
-      'title': 'Asesoría Personalizada',
-      'subtitle': 'Encuentra el servicio ideal para ti',
-      'imageUrl': 'assets/images/image_servicio4.png',
-      'url': 'https://www.equirent.com.co/home/la-libertad-carsharing/',
-    },
-  ]; */
+
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +32,7 @@ class _OurServiciosScreenState extends State<OurServiciosScreen> {
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: TopBar(
           screenType: ScreenType.progressScreen,
-          title: 'Servicios',
+          title: 'Servicios'
         ),
       ),
       body: Consumer<ServicesBloc>(
@@ -108,7 +52,8 @@ class _OurServiciosScreenState extends State<OurServiciosScreen> {
           final services = servicesBloc.services;
           if (services.isEmpty) {
             return const Center(
-              child: Text('No hay servicios disponibles'),
+              //child: Text('No hay servicios disponibles'),
+              child: Text(''),
             );
           }
 

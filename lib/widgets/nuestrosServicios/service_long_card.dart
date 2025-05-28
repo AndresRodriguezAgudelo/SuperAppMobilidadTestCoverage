@@ -48,8 +48,8 @@ class ServiceLongCard extends StatelessWidget {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const SizedBox(
-                      width: 110,
-                      height: 110,
+                        width: 300,
+                        height: 240,
                       child: Center(
                         child: CircularProgressIndicator(),
                       ),
@@ -60,15 +60,15 @@ class ServiceLongCard extends StatelessWidget {
                   return imageUrl.startsWith('http')
                     ? Image.network(
                         imageUrl,
-                        width: 110,
                         height: 110,
+                        width: 140,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           print('⚠️ Error cargando imagen: $error');
                           return Image.asset(
                             'assets/images/image_servicio1.png',
-                            width: 110,
-                            height: 110,
+                        width: 300,
+                        height: 240,
                             fit: BoxFit.cover,
                           );
                         },
@@ -95,6 +95,8 @@ class ServiceLongCard extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -103,6 +105,8 @@ class ServiceLongCard extends StatelessWidget {
                         fontSize: 14,
                         color: Colors.grey,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -112,7 +116,7 @@ class ServiceLongCard extends StatelessWidget {
               padding: EdgeInsets.only(right: 16),
               child: Icon(
                 Icons.arrow_outward,
-                color: Colors.grey,
+                color: Color.fromARGB(255, 33, 33, 33),
                 size: 20,
               ),
             ),

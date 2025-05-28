@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/error_utils.dart';
 import 'package:provider/provider.dart';
 import '../widgets/button.dart';
 import '../widgets/top_bar.dart';
@@ -143,7 +144,7 @@ class _RTMScreenState extends State<RTMScreen> {
             child: Icon(
               icon,
               color: Colors.white,
-              size: 20,
+              size: 24,
             ),
           ),
           Expanded(
@@ -153,8 +154,8 @@ class _RTMScreenState extends State<RTMScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
                     color: Colors.black87,
                   ),
                 ),
@@ -201,7 +202,7 @@ class _RTMScreenState extends State<RTMScreen> {
             child: Icon(
               icon,
               color: Colors.white,
-              size: 20,
+              size: 24,
             ),
           ),
           Expanded(
@@ -249,7 +250,7 @@ class _RTMScreenState extends State<RTMScreen> {
                 appBar: PreferredSize(
                   preferredSize: const Size.fromHeight(kToolbarHeight),
                   child: TopBar(
-                    screenType: ScreenType.progressScreen,
+                    screenType: ScreenType.expirationScreen, // Cambiado a expirationScreen para siempre navegar al home
                     title: 'RTM',
                     actionItems: [
                       Container(
@@ -282,18 +283,34 @@ class _RTMScreenState extends State<RTMScreen> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text(
-                          'La RTM es un requisito obli﻿gatorio ya que mejora la seguridad vial y reduce el riesgo de siniestros en las carreteras.  Configure esta alerta y agende en su CDA de confianza.',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            height: 1.5,
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'La RTM es un ',
+                              ),
+                              TextSpan(
+                                text: 'requisito obligatorio ',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextSpan(
+                                text:
+                                    'ya que mejora la seguridad vial y reduce el riesgo de siniestros en las carreteras.  Configure esta alerta y agende en su CDA de confianza.',
+                              ),
+                            ],
                           ),
                         ),
                       ),
                       _buildInfoContainer2(
                         title: 'CDA de la ultima RTM',
                         content: alertData?['lastCDA'] ?? 'No disponible',
-                        icon: Icons.description_outlined,
+                        icon: Icons.construction,
                       ),
                       _buildInfoContainer2(
                         title: 'Fecha de vencimiento',
@@ -302,12 +319,13 @@ class _RTMScreenState extends State<RTMScreen> {
                             ? bloc.formatExpirationDate(
                                 alertData['expirationDate'])
                             : 'No disponible',
-                        icon: Icons.calendar_today_outlined,
+                        icon: Icons.access_time_outlined,
                         backgroundColor: bloc.getRTMStatusSubColor(),
                         iconBackgroundColor: bloc.getRTMStatusColor(),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 15, vertical: 7),
                         child: Row(
                           children: const [
                             Icon(Icons.info, color: Color(0xFF38A8E0)),
@@ -316,7 +334,7 @@ class _RTMScreenState extends State<RTMScreen> {
                               child: Text(
                                 'Te avisaremos un día antes y el día de vencimiento para que no se te pase.',
                                 style: TextStyle(
-                                    fontSize: 14, color: Color(0xFF222222)),
+                                    fontSize: 16, color: Colors.black),
                               ),
                             ),
                           ],
@@ -360,7 +378,7 @@ class _RTMScreenState extends State<RTMScreen> {
                         title: '¿Renovaste tu RTM?',
                         content:
                             'Puedes refrescar la información manualmente un mes antes del vencimiento.',
-                        icon: Icons.align_vertical_bottom,
+                        icon: Icons.info_outline,
                         backgroundColor: const Color(0xFFFCECDE),
                         iconBackgroundColor: const Color(0xFFF5A462),
                       ),
@@ -374,7 +392,9 @@ class _RTMScreenState extends State<RTMScreen> {
                               children: [
                                 const Text(
                                   'Última actualización',
-                                  style: TextStyle(color: Colors.black54),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                  ),
                                 ),
                                 if (ultimaActualizacion?.year != null)
                                   Text(
@@ -382,7 +402,7 @@ class _RTMScreenState extends State<RTMScreen> {
                                         alertData?['lastUpdate']),
                                     style: const TextStyle(
                                       color: Colors.black,
-                                      fontSize: 14,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -397,10 +417,24 @@ class _RTMScreenState extends State<RTMScreen> {
                                 final api = APIService();
                                 final token = AuthContext().token;
                                 try {
+                                  // Verificar los valores que se están pasando
+                                  debugPrint('\n💾 RTM_SCREEN: Valores antes de la llamada:');
+                                  debugPrint('- alertId: ${widget.alertId}');
+                                  debugPrint('- vehicleId: ${widget.vehicleId}');
+                                  
+                                  // Construir el endpoint para mostrar en los logs
+                                  final endpointPath = api.getReloadExpirationEndpoint(
+                                    'rtm',
+                                    expirationId: widget.alertId,
+                                    vehicleId: widget.vehicleId,
+                                  );
+                                  debugPrint('\n🔗 URL del endpoint: $endpointPath');
+                                  
                                   final result = await api.reloadExpiration(
                                     'rtm',
                                     token: token,
                                     expirationId: widget.alertId,
+                                    vehicleId: widget.vehicleId, // Incluir el ID del vehículo
                                   );
                                   if (result['success'] == true ||
                                       result['result'] == true) {
@@ -420,11 +454,15 @@ class _RTMScreenState extends State<RTMScreen> {
                                     );
                                   }
                                 } catch (e) {
+                                  // Limpiar el mensaje de error usando ErrorUtils
+                                  final cleanedError =
+                                      ErrorUtils.cleanErrorMessage(e);
+
                                   NotificationCard.showNotification(
                                     context: context,
                                     isPositive: false,
                                     icon: Icons.error,
-                                    text: e.toString(),
+                                    text: cleanedError,
                                     date: DateTime.now(),
                                     title: 'Error',
                                   );

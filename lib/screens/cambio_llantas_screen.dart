@@ -9,6 +9,7 @@ import '../BLoC/alerts/alerts_bloc.dart';
 import '../BLoC/home/home_bloc.dart';
 import '../widgets/confirmation_modales.dart';
 import '../widgets/loading.dart';
+import '../utils/error_utils.dart';
 
 class CambioLlantasScreen extends StatefulWidget {
   final int alertId; // ID de la alerta para actualizaciones
@@ -35,7 +36,8 @@ class _CambioLlantasScreenState extends State<CambioLlantasScreen> {
   late final SpecialAlertsBloc _alertsBloc;
 
   bool get isFormValid {
-    return lastUpdateDate != null; // Usar lastUpdateDate en lugar de fechaVencimiento
+    return lastUpdateDate !=
+        null; // Usar lastUpdateDate en lugar de fechaVencimiento
   }
 
   @override
@@ -121,10 +123,12 @@ class _CambioLlantasScreenState extends State<CambioLlantasScreen> {
         String isoString = lastUpdateDate!.toIso8601String();
         // Verificar si ya termina en Z para no duplicarla
         fechaISO = isoString.endsWith('Z') ? isoString : "${isoString}Z";
-        print('\n📅 CAMBIO_LLANTAS: Guardando fecha de último mantenimiento: $lastUpdateDate');
-        print('\n📅 CAMBIO_LLANTAS: Fecha ISO formateada correctamente: $fechaISO');
+        print(
+            '\n📅 CAMBIO_LLANTAS: Guardando fecha de último mantenimiento: $lastUpdateDate');
+        print(
+            '\n📅 CAMBIO_LLANTAS: Fecha ISO formateada correctamente: $fechaISO');
       }
-      
+
       final Map<String, dynamic> body = {
         'expirationType': nombreVencimiento,
         'lastMaintenanceDate': fechaISO,
@@ -132,15 +136,6 @@ class _CambioLlantasScreenState extends State<CambioLlantasScreen> {
             selectedReminders, // Ya está en el formato correcto: [{days: 1}, {days: 7}, etc]
       };
 
-      print('\n💾 EXTINTOR_SCREEN: Guardando alerta con datos:');
-      print('ID: ${widget.alertId}');
-      print('Datos a enviar en el PATCH: $body');
-      print('Es alerta especial: true');
-
-      // Usar el método updateSpecialAlert del SpecialAlertsBloc para alertas especiales
-      // Usar la instancia local en lugar de obtenerla a través de Provider
-      // Enviar los datos básicos y los recordatorios
-      print('\n📅 CAMBIO_LLANTAS: Enviando fecha a updateSpecialAlertRevertCount: $lastUpdateDate');
       final success = await _alertsBloc.updateSpecialAlertRevertCount(
         widget.alertId,
         nombreVencimiento,
@@ -188,16 +183,22 @@ class _CambioLlantasScreenState extends State<CambioLlantasScreen> {
               // Buscar el vehículo seleccionado o usar el primero si no hay selección
               // Obtener el vehículo seleccionado usando HomeBloc
               final selectedVehicle = homeBloc.getSelectedVehicle();
-              selectedCar = (selectedVehicle != null && selectedVehicle is Map && selectedVehicle['id'] != null) 
+              selectedCar = (selectedVehicle != null &&
+                      selectedVehicle is Map &&
+                      selectedVehicle['id'] != null)
                   ? selectedVehicle as Map<String, dynamic>
                   : (homeBloc.cars.isNotEmpty ? homeBloc.cars.first : null);
-              
-              if (selectedCar == null || !selectedCar.containsKey('id') || !selectedCar.containsKey('licensePlate')) {
-                print('\n⚠️ CAMBIO_LLANTAS: No se pudo obtener un vehículo válido');
+
+              if (selectedCar == null ||
+                  !selectedCar.containsKey('id') ||
+                  !selectedCar.containsKey('licensePlate')) {
+                print(
+                    '\n⚠️ CAMBIO_LLANTAS: No se pudo obtener un vehículo válido');
                 return;
               }
-              
-              print('\n🚗 CAMBIO_LLANTAS: Usando vehículo seleccionado: ${selectedCar["licensePlate"]}');
+
+              print(
+                  '\n🚗 CAMBIO_LLANTAS: Usando vehículo seleccionado: ${selectedCar["licensePlate"]}');
               vehicleId = selectedCar["id"];
 
               print(
@@ -221,19 +222,19 @@ class _CambioLlantasScreenState extends State<CambioLlantasScreen> {
           }
 
           // Esperar un momento antes de navegar para que el modal sea visible
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted && selectedCar != null && vehicleId != null) {
-              // Navegar de regreso al home con información del vehículo seleccionado
-              Navigator.of(context).pop({
-                'success': true,
-                'vehicleId': vehicleId,
-                'licensePlate': selectedCar["licensePlate"],
-              }); // Regresar con resultado exitoso y datos del vehículo
-            } else if (mounted) {
-              // Si no tenemos datos del vehículo, regresar con éxito simple
-              Navigator.of(context).pop(true);
-            }
-          });
+          //Future.delayed(const Duration(milliseconds: 300), () {
+          //  if (mounted && selectedCar != null && vehicleId != null) {
+          //    // Navegar de regreso al home con información del vehículo seleccionado
+          //    Navigator.of(context).pop({
+          //      'success': true,
+          //      'vehicleId': vehicleId,
+          //      'licensePlate': selectedCar["licensePlate"],
+          //    }); // Regresar con resultado exitoso y datos del vehículo
+          //  } else if (mounted) {
+          //    // Si no tenemos datos del vehículo, regresar con éxito simple
+          //    Navigator.of(context).pop(true);
+          //  }
+          //});
           // No hacer pop inmediatamente para evitar doble navegación
           // Navigator.of(context).pop(true);
         } else {
@@ -241,12 +242,12 @@ class _CambioLlantasScreenState extends State<CambioLlantasScreen> {
             isLoading = false;
           });
 
-          // Mostrar mensaje de error con ConfirmationModal
+          // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
           showConfirmationModal(
             context,
             attitude: 0, // Negativo (error)
             label:
-                'No se pudo actualizar la alerta: ${_alertsBloc.error ?? 'Intenta nuevamente'}',
+                'No se pudo actualizar la alerta: ${ErrorUtils.cleanErrorMessage(_alertsBloc.error ?? 'Intenta nuevamente')}',
           );
         }
       }
@@ -255,12 +256,12 @@ class _CambioLlantasScreenState extends State<CambioLlantasScreen> {
         isLoading = false;
       });
 
-      // Mostrar mensaje de error con ConfirmationModal
+      // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
       if (mounted) {
         showConfirmationModal(
           context,
           attitude: 0, // Negativo (error)
-          label: 'Error al guardar: $e',
+          label: 'Error al guardar: ${ErrorUtils.cleanErrorMessage(e)}',
         );
       }
     }
@@ -343,77 +344,49 @@ class _CambioLlantasScreenState extends State<CambioLlantasScreen> {
         value: _alertsBloc,
         child: Scaffold(
           backgroundColor: Colors.white,
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(kToolbarHeight),
-              child: Consumer<SpecialAlertsBloc>(
-                builder: (context, alertsBloc, _) {
-                  // Obtener el estado del extintor directamente de la propiedad 'estado'
-                  String? status;
-                  if (alertsBloc.alertData != null) {
-                    // Imprimir todas las claves disponibles para depuración
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: Consumer<SpecialAlertsBloc>(
+              builder: (context, alertsBloc, _) {
+                // Obtener el estado del extintor directamente de la propiedad 'estado'
+                String? status;
+                if (alertsBloc.alertData != null) {
+                  // Imprimir todas las claves disponibles para depuración
+                  print(
+                      '\n🔥 EXTINTOR_SCREEN: Claves disponibles en alertData: ${alertsBloc.alertData!.keys.toList()}');
+
+                  print(
+                      '\n🔥 EXTINTOR_SCREEN: Claves disponibles en alertData ya con info: ${alertsBloc.alertData}');
+
+                  // Usar directamente la propiedad 'estado' que viene del backend
+                  if (alertsBloc.alertData!.containsKey('estado')) {
+                    status = alertsBloc.alertData!['estado'];
                     print(
-                        '\n🔥 EXTINTOR_SCREEN: Claves disponibles en alertData: ${alertsBloc.alertData!.keys.toList()}');
+                        '\n🔥 EXTINTOR_SCREEN: Estado encontrado en "estado": $status');
+                  }
 
+                  // Si aún no encontramos el estado, intentar inferirlo de otros campos
+                  if (status == null) {
                     print(
-                        '\n🔥 EXTINTOR_SCREEN: Claves disponibles en alertData ya con info: ${alertsBloc.alertData}');
+                        '\n🔥 EXTINTOR_SCREEN: No se encontró estado explícito, intentando inferirlo...');
 
-                    // Usar directamente la propiedad 'estado' que viene del backend
-                    if (alertsBloc.alertData!.containsKey('estado')) {
-                      status = alertsBloc.alertData!['estado'];
-                      print(
-                          '\n🔥 EXTINTOR_SCREEN: Estado encontrado en "estado": $status');
-                    }
+                    // Imprimir todos los valores para depuración
+                    alertsBloc.alertData!.forEach((key, value) {
+                      print('\n🔥 EXTINTOR_SCREEN: $key: $value');
+                    });
 
-                    // Si aún no encontramos el estado, intentar inferirlo de otros campos
-                    if (status == null) {
-                      print(
-                          '\n🔥 EXTINTOR_SCREEN: No se encontró estado explícito, intentando inferirlo...');
-
-                      // Imprimir todos los valores para depuración
-                      alertsBloc.alertData!.forEach((key, value) {
-                        print('\n🔥 EXTINTOR_SCREEN: $key: $value');
-                      });
-
-                      // Intentar inferir el estado a partir de la fecha de vencimiento
-                      if (alertsBloc.alertData!.containsKey('expirationDate') &&
-                          alertsBloc.alertData!['expirationDate'] != null) {
-                        try {
-                          final expirationDate = DateTime.parse(
-                              alertsBloc.alertData!['expirationDate']);
-                          final now = DateTime.now();
-                          final difference =
-                              expirationDate.difference(now).inDays;
-
-                          print(
-                              '\n🔥 EXTINTOR_SCREEN: Fecha de vencimiento: $expirationDate, diferencia en días: $difference');
-
-                          if (difference < 0) {
-                            status = 'Vencido';
-                          } else if (difference < 30) {
-                            status = 'Por vencer';
-                          } else {
-                            status = 'Vigente';
-                          }
-
-                          print(
-                              '\n🔥 EXTINTOR_SCREEN: Estado inferido a partir de la fecha: $status');
-                        } catch (e) {
-                          print(
-                              '\n🔥 EXTINTOR_SCREEN: Error al inferir estado: $e');
-                        }
-                      } else {
-                        print(
-                            '\n🔥 EXTINTOR_SCREEN: No se encontró fecha de vencimiento para inferir estado');
-                      }
-                    }
-
-                    // Si después de todo no tenemos un estado, usar un valor por defecto
-                    if (status == null) {
-                      if (fechaVencimiento != null) {
-                        // Inferir a partir de la fecha local
+                    // Intentar inferir el estado a partir de la fecha de vencimiento
+                    if (alertsBloc.alertData!.containsKey('expirationDate') &&
+                        alertsBloc.alertData!['expirationDate'] != null) {
+                      try {
+                        final expirationDate = DateTime.parse(
+                            alertsBloc.alertData!['expirationDate']);
                         final now = DateTime.now();
                         final difference =
-                            fechaVencimiento!.difference(now).inDays;
+                            expirationDate.difference(now).inDays;
+
+                        print(
+                            '\n🔥 EXTINTOR_SCREEN: Fecha de vencimiento: $expirationDate, diferencia en días: $difference');
 
                         if (difference < 0) {
                           status = 'Vencido';
@@ -424,19 +397,21 @@ class _CambioLlantasScreenState extends State<CambioLlantasScreen> {
                         }
 
                         print(
-                            '\n🔥 EXTINTOR_SCREEN: Estado inferido a partir de la fecha local: $status');
-                      } else {
-                        // Valor por defecto si no hay información
-                        status = 'Configurar';
+                            '\n🔥 EXTINTOR_SCREEN: Estado inferido a partir de la fecha: $status');
+                      } catch (e) {
                         print(
-                            '\n🔥 EXTINTOR_SCREEN: Usando estado por defecto: $status');
+                            '\n🔥 EXTINTOR_SCREEN: Error al inferir estado: $e');
                       }
+                    } else {
+                      print(
+                          '\n🔥 EXTINTOR_SCREEN: No se encontró fecha de vencimiento para inferir estado');
                     }
-                  } else {
-                    print(
-                        '\n🔥 EXTINTOR_SCREEN: No hay datos de alerta disponibles');
+                  }
+
+                  // Si después de todo no tenemos un estado, usar un valor por defecto
+                  if (status == null) {
                     if (fechaVencimiento != null) {
-                      // Inferir a partir de la fecha local si no hay datos de alerta
+                      // Inferir a partir de la fecha local
                       final now = DateTime.now();
                       final difference =
                           fechaVencimiento!.difference(now).inDays;
@@ -450,366 +425,385 @@ class _CambioLlantasScreenState extends State<CambioLlantasScreen> {
                       }
 
                       print(
-                          '\n🔥 EXTINTOR_SCREEN: Estado inferido a partir de la fecha local (sin datos): $status');
+                          '\n🔥 EXTINTOR_SCREEN: Estado inferido a partir de la fecha local: $status');
+                    } else {
+                      // Valor por defecto si no hay información
+                      status = 'Configurar';
+                      print(
+                          '\n🔥 EXTINTOR_SCREEN: Usando estado por defecto: $status');
                     }
                   }
+                } else {
+                  print(
+                      '\n🔥 EXTINTOR_SCREEN: No hay datos de alerta disponibles');
+                  if (fechaVencimiento != null) {
+                    // Inferir a partir de la fecha local si no hay datos de alerta
+                    final now = DateTime.now();
+                    final difference = fechaVencimiento!.difference(now).inDays;
 
-                  // Determinar si mostrar el indicador y qué color usar
-                  List<Widget> actionItems = [];
-
-                  if (status != null &&
-                      status != 'Configurar' &&
-                      status != 'sinAsignar') {
-                    // Determinar color y texto según el estado
-                    Color bgColor;
-                    String statusText = status;
-
-                    switch (status) {
-                      case 'Vencido':
-                        bgColor = Colors.red;
-                        break;
-                      case 'Por vencer':
-                        bgColor = const Color(0xFFF5A462); // Amarillo
-                        break;
-                      case 'Vigente':
-                        bgColor = const Color(0xFF0B9E7C); // Verde
-                        break;
-                      default:
-                        bgColor = Colors.grey;
+                    if (difference < 0) {
+                      status = 'Vencido';
+                    } else if (difference < 30) {
+                      status = 'Por vencer';
+                    } else {
+                      status = 'Vigente';
                     }
 
-                    actionItems.add(Container(
-                      margin: const EdgeInsets.only(right: 16),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: bgColor,
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 24),
-                        child: Center(
-                          child: Text(
-                            statusText,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
+                    print(
+                        '\n🔥 EXTINTOR_SCREEN: Estado inferido a partir de la fecha local (sin datos): $status');
+                  }
+                }
+
+                // Determinar si mostrar el indicador y qué color usar
+                List<Widget> actionItems = [];
+
+                if (status != null &&
+                    status != 'Configurar' &&
+                    status != 'sinAsignar') {
+                  // Determinar color y texto según el estado
+                  Color bgColor;
+                  String statusText = status;
+
+                  switch (status) {
+                    case 'Vencido':
+                      bgColor = Colors.red;
+                      break;
+                    case 'Por vencer':
+                      bgColor = const Color(0xFFF5A462); // Amarillo
+                      break;
+                    case 'Vigente':
+                      bgColor = const Color(0xFF0B9E7C); // Verde
+                      break;
+                    default:
+                      bgColor = Colors.grey;
+                  }
+
+                  actionItems.add(Container(
+                    margin: const EdgeInsets.only(right: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 24),
+                      child: Center(
+                        child: Text(
+                          statusText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                    ));
-                  }
+                    ),
+                  ));
+                }
 
-                  return TopBar(
-                    title: 'Cambio de llantas',
-                    screenType: ScreenType.progressScreen,
-                    onBackPressed: () => Navigator.pop(context),
-                    actionItems: actionItems,
-                  );
-                },
-              ),
+                return TopBar(
+                  title: 'Cambio de llantas',
+                  screenType: ScreenType.expirationScreen, // Cambiado a expirationScreen para siempre navegar al home
+                  actionItems: actionItems,
+                );
+              },
             ),
-            body: SafeArea(
-              child: Consumer<SpecialAlertsBloc>(
-                builder: (context, bloc, _) {
-                  // Actualizar variables locales con datos del bloc cuando estén disponibles
-                  if (!bloc.isLoading && bloc.alertData != null) {
-                    final alertData = bloc.alertData!;
+          ),
+          body: SafeArea(
+            child: Consumer<SpecialAlertsBloc>(
+              builder: (context, bloc, _) {
+                // Actualizar variables locales con datos del bloc cuando estén disponibles
+                if (!bloc.isLoading && bloc.alertData != null) {
+                  final alertData = bloc.alertData!;
 
-
-                    // Solo cargar la fecha de la API si no hay una fecha seleccionada por el usuario
-                    if (alertData['lastMaintenanceDate'] != null && lastUpdateDate == null) {
-                      try {
-                        lastUpdateDate = DateTime.parse(alertData['lastMaintenanceDate']);
-                        print('\n📅 CAMBIO_LLANTAS: Cargando fecha de último mantenimiento desde API: $lastUpdateDate');
-                      } catch (e) {
-                        print('\n❌ Error al parsear lastMaintenanceDate: ${alertData['lastMaintenanceDate']}');
-                      }
-                    } else {
-                      print('\n📅 CAMBIO_LLANTAS: Manteniendo fecha seleccionada por el usuario: $lastUpdateDate');
+                  // Solo cargar la fecha de la API si no hay una fecha seleccionada por el usuario
+                  if (alertData['lastMaintenanceDate'] != null &&
+                      lastUpdateDate == null) {
+                    try {
+                      lastUpdateDate =
+                          DateTime.parse(alertData['lastMaintenanceDate']);
+                      print(
+                          '\n📅 CAMBIO_LLANTAS: Cargando fecha de último mantenimiento desde API: $lastUpdateDate');
+                    } catch (e) {
+                      print(
+                          '\n❌ Error al parsear lastMaintenanceDate: ${alertData['lastMaintenanceDate']}');
                     }
-                    
-                    print('\n📅 CAMBIO_LLANTAS: Estado actual - Fecha de último mantenimiento: $lastUpdateDate');
-                    print('\n📅 CAMBIO_LLANTAS: Estado actual - Fecha de vencimiento: $fechaVencimiento');
-                    // Actualizar la fecha de vencimiento si existe y no hay una fecha seleccionada por el usuario
-                    if (alertData['expirationDate'] != null && fechaVencimiento == null) {
-                      try {
-                        fechaVencimiento =
-                            DateTime.parse(alertData['expirationDate']);
-                      } catch (e) {
-                        print(
-                            'Error al parsear la fecha: ${alertData['expirationDate']}');
-                      }
-                    }
+                  } else {
+                    print(
+                        '\n📅 CAMBIO_LLANTAS: Manteniendo fecha seleccionada por el usuario: $lastUpdateDate');
+                  }
 
-                    // Actualizar los recordatorios si existen
-                    if (alertData['reminders'] != null &&
-                        selectedReminders.isEmpty) {
-                      selectedReminders = List<Map<String, dynamic>>.from(
-                          alertData['reminders']);
-                    }
-
-                    // Actualizar el estado de carga fuera del build
-                    if (isLoading) {
-                      // Usar Future.microtask para programar la actualización del estado después del build
-                      Future.microtask(() {
-                        if (mounted) {
-                          setState(() {
-                            isLoading = false;
-                          });
-                        }
-                      });
+                  print(
+                      '\n📅 CAMBIO_LLANTAS: Estado actual - Fecha de último mantenimiento: $lastUpdateDate');
+                  print(
+                      '\n📅 CAMBIO_LLANTAS: Estado actual - Fecha de vencimiento: $fechaVencimiento');
+                  // Actualizar la fecha de vencimiento si existe y no hay una fecha seleccionada por el usuario
+                  if (alertData['expirationDate'] != null &&
+                      fechaVencimiento == null) {
+                    try {
+                      fechaVencimiento =
+                          DateTime.parse(alertData['expirationDate']);
+                    } catch (e) {
+                      print(
+                          'Error al parsear la fecha: ${alertData['expirationDate']}');
                     }
                   }
 
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Mostrar la descripción de la alerta desde el bloc si está disponible
-                              Text(
-                                bloc.alertData?['description'] ??
-                                    'Revisar frenos periódicamente ayuda a mantener su vehiculo en óptimas condiciones asi como evitar accidentes. Configure esta alerta y agende su cita de revisión.',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF6B7280),
+                  // Actualizar los recordatorios si existen
+                  if (alertData['reminders'] != null &&
+                      selectedReminders.isEmpty) {
+                    selectedReminders =
+                        List<Map<String, dynamic>>.from(alertData['reminders']);
+                  }
+
+                  // Actualizar el estado de carga fuera del build
+                  if (isLoading) {
+                    // Usar Future.microtask para programar la actualización del estado después del build
+                    Future.microtask(() {
+                      if (mounted) {
+                        setState(() {
+                          isLoading = false;
+                        });
+                      }
+                    });
+                  }
+                }
+
+                return Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Mostrar la descripción de la alerta desde el bloc si está disponible
+                              RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'Revisiones periódicas prolongan la vida útil de sus neumáticos, mejoran el desempeño del vehículo, y velan por su seguridad. ',
+                                    ),
+                                    TextSpan(
+                                      text: 'Configure esta alerta ',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: 'y agende su cita de revisión.',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(height: 24),
+                            InputDate(
+                              label: 'Fecha de ultimo mantenimiento',
+                              value: lastUpdateDate,
+                              onChanged: (date) {
+                                print(
+                                    '\n📅 CAMBIO_LLANTAS: Nueva fecha seleccionada: $date');
+                                setState(() {
+                                  lastUpdateDate = date;
+                                  fechaVencimiento =
+                                      date; // Actualizar también fechaVencimiento
+                                  print(
+                                      '\n📅 CAMBIO_LLANTAS: lastUpdateDate actualizado a: $lastUpdateDate');
+                                  print(
+                                      '\n📅 CAMBIO_LLANTAS: fechaVencimiento actualizado a: $fechaVencimiento');
+                                });
+                              },
+                            ),
+
+                            const SizedBox(height: 25),
+
+                            if (bloc.alertData != null &&
+                                bloc.alertData!['estado'] != 'Configurar') ...[
+                              Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Fecha de vencimiento',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      bloc.alertData?['expirationDate'] != null
+                                          ? _formatDate(
+                                              bloc.alertData!['expirationDate'])
+                                          : 'No disponible',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF111827),
+                                      ),
+                                    )
+                                  ]),
+                              const SizedBox(height: 25),
+                            ],
+
+                            // Mostrar mensaje de alerta si está vencido
+                            if (bloc.alertData != null &&
+                                bloc.alertData!['estado'] == 'Vencido') ...[
+                              SizedBox(
+                                child: _buildInfoContainer(
+                                  title:
+                                      'Registra la nueva información para seguir recibiendo alertas',
+                                  content: '¿Actualizaste este ítem?',
+                                  icon: Icons.error,
+                                  backgroundColor: const Color(0xFFFADDD7),
+                                  iconBackgroundColor: const Color(0xFFE05C3A),
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              InputDate(
-                                label: 'Fecha de ultimo mantenimiento',
-                                value: lastUpdateDate,
-                                onChanged: (date) {
-                                  print('\n📅 CAMBIO_LLANTAS: Nueva fecha seleccionada: $date');
+                            ],
+
+                            if (bloc.alertData != null &&
+                                bloc.alertData!['estado'] != 'Vencido' &&
+                                bloc.alertData!['estado'] != 'Configurar') ...[
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.info, color: Color(0xFF38A8E0)),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Te avisaremos un día antes y el día de vencimiento para que no se te pase.',
+                                        style: TextStyle(
+                                            fontSize: 16, color: Colors.black),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 25),
+                            ],
+
+                            if (bloc.alertData != null &&
+                                bloc.alertData!['estado'] != 'Vencido' &&
+                                bloc.alertData!['estado'] != 'Configurar') ...[
+                              const SizedBox(height: 8),
+                              RecordatoriosAdicionales(
+                                selectedReminders: selectedReminders,
+                                onChanged: (reminders) {
                                   setState(() {
-                                    lastUpdateDate = date;
-                                    fechaVencimiento = date; // Actualizar también fechaVencimiento
-                                    print('\n📅 CAMBIO_LLANTAS: lastUpdateDate actualizado a: $lastUpdateDate');
-                                    print('\n📅 CAMBIO_LLANTAS: fechaVencimiento actualizado a: $fechaVencimiento');
+                                    selectedReminders = reminders;
                                   });
                                 },
                               ),
-
-                              const SizedBox(height: 25),
-
-                              if (bloc.alertData != null &&
-                                  bloc.alertData!['estado'] !=
-                                      'Configurar') ...[
-                                Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        'Fecha de vencimiento',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF6B7280),
-                                        ),
-                                      ),
-                                      Text(
-                                        bloc.alertData?['expirationDate'] !=
-                                                null
-                                            ? _formatDate(bloc
-                                                .alertData!['expirationDate'])
-                                            : 'No disponible',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF111827),
-                                        ),
-                                      )
-                                    ]),
-                                const SizedBox(height: 25),
-                              ],
-
-                              // Mostrar mensaje de alerta si está vencido
-                              if (bloc.alertData != null &&
-                                  bloc.alertData!['estado'] == 'Vencido') ...[
-                                SizedBox(
-                                  child: _buildInfoContainer(
-                                    title:
-                                        'Registra la nueva información para seguir recibiendo alertas',
-                                    content: '¿Actualizaste este ítem?',
-                                    icon: Icons.error,
-                                    backgroundColor: const Color(0xFFFADDD7),
-                                    iconBackgroundColor:
-                                        const Color(0xFFE05C3A),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                              ],
-
-                              if (bloc.alertData != null &&
-                                  bloc.alertData!['estado'] != 'Vencido' &&
-                                  bloc.alertData!['estado'] !=
-                                      'Configurar') ...[
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 15,
-                                      height: 15,
-                                      margin: const EdgeInsets.only(right: 16),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF38A8E0),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        // Usamos Center para centrar el contenido
-                                        child: Text(
-                                          'i',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Color.fromARGB(
-                                                255, 255, 255, 255),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const Expanded(
-                                      // Este widget permite que el texto ocupe el espacio restante
-                                      child: Text(
-                                        'Te avisaremos un dia antes y el dia de vencimiento para que no se te pase.',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF6B7280),
-                                        ),
-                                        softWrap:
-                                            true, // El texto se ajusta automáticamente a varias líneas
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 25),
-                              ],
-
-                              if (bloc.alertData != null &&
-                                  bloc.alertData!['estado'] != 'Vencido' &&
-                                  bloc.alertData!['estado'] !=
-                                      'Configurar') ...[
-                                const SizedBox(height: 8),
-                                RecordatoriosAdicionales(
-                                  selectedReminders: selectedReminders,
-                                  onChanged: (reminders) {
-                                    setState(() {
-                                      selectedReminders = reminders;
-                                    });
-                                  },
-                                ),
-                              ],
-
-                              // Recordatorios adicionales
-
-                              const SizedBox(height: 14),
-
-                              // Banner de servicio
-                              if (bloc.alertData != null &&
-                                  bloc.alertData!['hasBanner'] == true &&
-                                  bloc.alertData!['imageBanner'] != null)
-                                Column(
-                                  children: [
-                                    const SizedBox(height: 0),
-                                    // Eliminamos el padding horizontal del BannerWidget envolviéndolo en un Padding negativo
-                                    SizedBox(
-                                      height: 158,
-                                      width: double.infinity,
-                                      // Usamos un ClipRRect para mantener los bordes redondeados
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.network(
-                                          bloc.alertData!['imageBanner'],
-                                          fit: BoxFit.fill,
-                                          width: double.infinity,
-                                          height: double.infinity,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            print(
-                                                '\n❌ ERROR CARGANDO IMAGEN DE BANNER: $error');
-                                            print(
-                                                'URL: ${bloc.alertData!['imageBanner']}');
-                                            // Mostrar imagen de respaldo en caso de error
-                                            return Image.asset(
-                                              'assets/images/BannerSOAT.png',
-                                              fit: BoxFit.fill,
-                                              width: double.infinity,
-                                              height: double.infinity,
-                                            );
-                                          },
-                                          loadingBuilder: (context, child,
-                                              loadingProgress) {
-                                            if (loadingProgress == null) {
-                                              return child;
-                                            }
-                                            return Center(
-                                              child: CircularProgressIndicator(
-                                                value: loadingProgress
-                                                            .expectedTotalBytes !=
-                                                        null
-                                                    ? loadingProgress
-                                                            .cumulativeBytesLoaded /
-                                                        loadingProgress
-                                                            .expectedTotalBytes!
-                                                    : null,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-                                  ],
-                                ),
-
-                              // Mensaje de error si existe
-                              if (errorMessage != null)
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.shade50,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    errorMessage!,
-                                    style:
-                                        TextStyle(color: Colors.red.shade800),
-                                  ),
-                                ),
                             ],
-                          ),
-                        ),
-                      ),
 
-                      // Botón de guardar
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                        ),
-                        child: Button(
-                          text: bloc.alertData != null &&
-                                  bloc.alertData!['estado'] == 'Vencido'
-                              ? 'Actualizar información'
-                              : 'Guardar',
-                          isLoading: isLoading,
-                          action: isFormValid ? _saveAlert : null,
+                            // Recordatorios adicionales
+
+                            const SizedBox(height: 14),
+
+                            // Banner de servicio
+                            if (bloc.alertData != null &&
+                                bloc.alertData!['hasBanner'] == true &&
+                                bloc.alertData!['imageBanner'] != null)
+                              Column(
+                                children: [
+                                  const SizedBox(height: 0),
+                                  // Eliminamos el padding horizontal del BannerWidget envolviéndolo en un Padding negativo
+                                  SizedBox(
+                                    height: 158,
+                                    width: double.infinity,
+                                    // Usamos un ClipRRect para mantener los bordes redondeados
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                        bloc.alertData!['imageBanner'],
+                                        fit: BoxFit.fill,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          print(
+                                              '\n❌ ERROR CARGANDO IMAGEN DE BANNER: $error');
+                                          print(
+                                              'URL: ${bloc.alertData!['imageBanner']}');
+                                          // Mostrar imagen de respaldo en caso de error
+                                          return Image.asset(
+                                            'assets/images/BannerSOAT.png',
+                                            fit: BoxFit.fill,
+                                            width: double.infinity,
+                                            height: double.infinity,
+                                          );
+                                        },
+                                        loadingBuilder:
+                                            (context, child, loadingProgress) {
+                                          if (loadingProgress == null) {
+                                            return child;
+                                          }
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value: loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                          .cumulativeBytesLoaded /
+                                                      loadingProgress
+                                                          .expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                ],
+                              ),
+
+                            // Mensaje de error si existe
+                            if (errorMessage != null)
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  errorMessage!,
+                                  style: TextStyle(color: Colors.red.shade800),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+
+                    // Botón de guardar
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                      ),
+                      child: Button(
+                        text: bloc.alertData != null &&
+                                bloc.alertData!['estado'] == 'Vencido'
+                            ? 'Actualizar información'
+                            : 'Guardar',
+                        isLoading: isLoading,
+                        action: isFormValid ? _saveAlert : null,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
-
-
-      );
+      ),
+    );
   }
 }

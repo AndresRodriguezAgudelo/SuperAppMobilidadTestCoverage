@@ -10,6 +10,8 @@ import '../BLoC/historial_vehicular/historial_vehicular_bloc.dart';
 import 'historial_vehicular_screen.dart';
 import '../BLoC/vehicles/vehicles_bloc.dart';
 import '../BLoC/home/home_bloc.dart';
+import '../services/API.dart';
+import '../BLoC/auth/auth_context.dart';
 
 class DetalleVehiculoScreen extends StatefulWidget {
   final String placa;
@@ -41,7 +43,7 @@ class _DetalleVehiculoScreenState extends State<DetalleVehiculoScreen> {
                   label,
                   style: const TextStyle(
                     fontSize: 15,
-                    color: Colors.black54,
+                    color: Colors.black,
                   ),
                 ),
               ),
@@ -51,7 +53,6 @@ class _DetalleVehiculoScreenState extends State<DetalleVehiculoScreen> {
                   value,
                   style: const TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w500,
                     color: Colors.black,
                   ),
                   textAlign: TextAlign.end,
@@ -113,21 +114,9 @@ class _DetalleVehiculoScreenState extends State<DetalleVehiculoScreen> {
                         ),
                         onPressed: () {
                           CustomModal.show(
-                            // final IconData icon;
-                            // final String title;
-                            // final String content;
-                            // final String buttonText;
-                            // final VoidCallback? onButtonPressed;
-                            // final String? secondButtonText;
-                            // final VoidCallback? onSecondButtonPressed;
-                            // final Color? iconColor;
-                            // final Color? buttonColor;
-                            // final Color? secondButtonColor;
-                            // final Color? labelButtonColor;
-                            // final Color? labelSecondButtonColor;
-
                             context: context,
-                            icon: Icons.info,
+                            icon: Icons.info_outline,
+                            iconColor: Colors.white,
                             title:
                                 '¿Estas seguro de que deseas eliminar este vehiculo?',
                             content: 'Esta acción no se puede deshacer',
@@ -176,7 +165,6 @@ class _DetalleVehiculoScreenState extends State<DetalleVehiculoScreen> {
                                 }
                               }
                             },
-                            iconColor: Color(0xFF0E5D9E),
                             buttonColor: Color(0xFF50B6E6),
                             secondButtonColor:
                                 const Color.fromARGB(255, 255, 255, 255),
@@ -224,7 +212,7 @@ class _DetalleVehiculoScreenState extends State<DetalleVehiculoScreen> {
                                 _buildInfoRow('Pasajeros',
                                     vehicle['passagers'].toString()),
                                 _buildInfoRow('VIN', vehicle['vin']),
-                                _buildInfoRow('SERIAL', vehicle['serial']),
+                                _buildInfoRow('Serial', vehicle['serial']),
                                 _buildInfoRow(
                                     'Número motor', vehicle['numberEngine']),
                                 _buildInfoRow(
@@ -247,24 +235,115 @@ class _DetalleVehiculoScreenState extends State<DetalleVehiculoScreen> {
                       padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 50.0),
                       child: Button(
                         text: 'Ver historial vehicular',
-                        action: () {
-                          final historialBloc = HistorialVehicularBloc();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ChangeNotifierProvider.value(
-                                value: historialBloc,
-                                child: HistorialVehicularScreen(
-                                  placa: widget.placa,
+                        action: () async {
+                          // Consumir el endpoint getReloadExpirationEndpoint antes de navegar
+                          // Variables para almacenar el mensaje y el estado de error
+                          String mensaje = '';
+                          bool esError = false;
+                          Map<String, dynamic> response = {};
+                          
+                          try {
+                            final apiService = APIService();
+                            final authContext = Provider.of<AuthContext>(context, listen: false);
+                            
+                            // Mostrar indicador de carga mientras se consume el endpoint
+                            setState(() {
+                              _isDeleting = true; // Reutilizamos esta variable para mostrar el indicador de carga
+                            });
+                            
+                            debugPrint('\n🔴🔴🔴 PUNTO DE VERIFICACIÓN 1: Antes de consumir el endpoint');
+                            debugPrint('Consumiendo endpoint getReloadExpirationEndpoint con name=VehicleHistory y expirationId=0');
+                            
+                            try {
+                              // Consumir el endpoint con name=VehicleHistory y expirationId=0
+                              response = await apiService.reloadExpiration(
+                                'vehicle-history',
+                                token: authContext.token,
+                                expirationId: 0,
+                                vehicleId: widget.vehicleId, // Incluir el ID del vehículo
+                              );
+                              
+                              // Imprimir la respuesta completa del endpoint
+                              debugPrint('\n==================================================');
+                              debugPrint('✅ RESPUESTA del endpoint getReloadExpirationEndpoint:');
+                              debugPrint('$response');
+                              
+                              // Procesar la respuesta
+                              if (response.containsKey('status')) {
+                                debugPrint('📊 Status: ${response['status']}');
+                                // Si el status es diferente de success, considerarlo como error
+                                if (response['status'] != 'success') {
+                                  esError = true;
+                                }
+                              }
+                              
+                              if (response.containsKey('message')) {
+                                mensaje = response['message'].toString();
+                                debugPrint('📝 Mensaje: $mensaje');
+                              } else {
+                                // Si no hay mensaje en la respuesta
+                                mensaje = 'Información actualizada correctamente';
+                              }
+                              
+                              if (response.containsKey('data')) {
+                                debugPrint('📦 Datos: ${response['data']}');
+                              }
+                              
+                              debugPrint('==================================================\n');
+                              debugPrint('Endpoint getReloadExpirationEndpoint consumido correctamente');
+                            } catch (apiError) {
+                              // Capturar error específico de la API
+                              debugPrint('\n==================================================');
+                              debugPrint('❌ ERROR al consumir getReloadExpirationEndpoint: $apiError');
+                              debugPrint('==================================================\n');
+                              
+                              // Extraer el mensaje de error
+                              if (apiError is APIException) {
+                                mensaje = apiError.message;
+                                debugPrint('📝 Mensaje de error extraído: $mensaje');
+                              } else {
+                                mensaje = apiError.toString();
+                              }
+                              esError = true;
+                            }
+                          } catch (e) {
+                            // Capturar cualquier otro error inesperado
+                            debugPrint('\n==================================================');
+                            debugPrint('❌ ERROR INESPERADO: $e');
+                            debugPrint('==================================================\n');
+                            mensaje = 'No se pudo obtener información actualizada';
+                            esError = true;
+                          } finally {
+                            // Ocultar indicador de carga
+                            if (mounted) {
+                              setState(() {
+                                _isDeleting = false;
+                              });
+                            }
+                            
+                            // Continuar con la navegación independientemente del resultado
+                            if (mounted) {
+                              final historialBloc = HistorialVehicularBloc();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ChangeNotifierProvider.value(
+                                    value: historialBloc,
+                                    child: HistorialVehicularScreen(
+                                      placa: widget.placa,
+                                      mensajeNotificacion: mensaje,
+                                      esErrorNotificacion: esError,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ).then((_) {
-                            // Limpiar el bloc cuando se regrese de la pantalla
-                            historialBloc.reset();
-                            historialBloc.dispose();
-                          });
+                              ).then((_) {
+                                // Limpiar el bloc cuando se regrese de la pantalla
+                                historialBloc.reset();
+                                historialBloc.dispose();
+                              });
+                            }
+                          }
                         },
                       ),
                     ),

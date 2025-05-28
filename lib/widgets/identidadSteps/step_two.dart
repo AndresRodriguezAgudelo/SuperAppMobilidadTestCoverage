@@ -30,7 +30,7 @@ class _StepTwoState extends State<StepTwo> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Crea tu cuenta para continuar',
+          'Crea tu cuenta para comenzar',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -38,16 +38,16 @@ class _StepTwoState extends State<StepTwo> {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Completa tu información para disfrutar de todos los beneficios de Equirent App',
+          'Completa tu información para disfrutar de todos los beneficions de Equirent Mobility',
           style: TextStyle(
             fontSize: 16,
-            color: Colors.grey,
+            color: Color.fromARGB(255, 80, 80, 80),
           ),
         ),
         const SizedBox(height: 32),
         InputText(
           type: InputType.name,
-          label: 'Nombre completo',
+          label: 'Nombre',
           onChanged: (value, isValid) {
             setState(() => name = isValid ? value : null);
             debugPrint('💡 Nombre cambiado - value: $value, isValid: $isValid');

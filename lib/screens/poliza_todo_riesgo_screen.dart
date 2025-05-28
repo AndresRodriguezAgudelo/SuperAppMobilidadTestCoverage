@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../widgets/inputs/input_date.dart';
 import '../widgets/inputs/input_insurer.dart';
@@ -12,6 +13,8 @@ import '../BLoC/home/home_bloc.dart';
 import '../widgets/confirmation_modales.dart';
 import '../widgets/banner.dart'; // Importamos el widget Banner
 import '../widgets/loading.dart';
+import '../utils/error_utils.dart';
+import '../widgets/notification_card.dart';
 
 class PolizaTodoRiesgoScreen extends StatefulWidget {
   final int alertId; // ID de la alerta para actualizaciones
@@ -93,10 +96,24 @@ class _PolizaTodoRiesgoScreenState extends State<PolizaTodoRiesgoScreen> {
     } catch (e) {
       print('\n🔥 Poliza todo riesgo_SCREEN: Error al cargar los detalles: $e');
       if (mounted) {
+        // Limpiar el mensaje de error usando ErrorUtils
+        final cleanedError = ErrorUtils.cleanErrorMessage(e);
+        
         setState(() {
-          errorMessage = 'Error al cargar los detalles: $e';
+          errorMessage = 'Error al cargar los detalles: $cleanedError';
           isLoading = false;
         });
+        
+        // Mostrar notificación al usuario
+        NotificationCard.showNotification(
+          context: context,
+          isPositive: false,
+          icon: Icons.error_outline,
+          text: cleanedError,
+          date: DateTime.now(),
+          title: 'Error al cargar datos',
+          duration: const Duration(seconds: 4),
+        );
       }
     }
   }
@@ -135,6 +152,7 @@ class _PolizaTodoRiesgoScreenState extends State<PolizaTodoRiesgoScreen> {
       if (mounted) {
         if (success) {
           // Primero mostrar el modal de confirmación
+          debugPrint('🔔 POLIZA_TODO_RIESGO: Mostrando modal de confirmación');
           showConfirmationModal(
             context,
             attitude: 1, // Positivo (éxito)
@@ -186,20 +204,21 @@ class _PolizaTodoRiesgoScreenState extends State<PolizaTodoRiesgoScreen> {
             return; // Salir en caso de error
           }
 
-          // Esperar un momento antes de navegar para que el modal sea visible
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted && selectedCar != null && vehicleId != null) {
-              // Navegar de regreso al home con información del vehículo seleccionado
-              Navigator.of(context).pop({
-                'success': true,
-                'vehicleId': vehicleId,
-                'licensePlate': selectedCar["licensePlate"],
-              }); // Regresar con resultado exitoso y datos del vehículo
-            } else if (mounted) {
-              // Si no tenemos datos del vehículo, regresar con éxito simple
-              Navigator.of(context).pop(true);
-            }
-          });
+          // Esperar un momento antes de navegar para que el modal y la notificación sean visibles
+          // Aumentamos el tiempo a 8 segundos para asegurar que la notificación tenga tiempo suficiente
+          //Future.delayed(const Duration(seconds: 8), () {
+          //  if (mounted && selectedCar != null && vehicleId != null) {
+          //    Navigator.of(context).pop({
+          //      'success': true,
+          //      'vehicleId': vehicleId,
+          //      'licensePlate': selectedCar["licensePlate"],
+          //    }); // Regresar con resultado exitoso y datos del vehículo
+          //  } else if (mounted) {
+          //    // Si no tenemos datos del vehículo, regresar con éxito simple
+          //  
+          //    Navigator.of(context).pop(true);
+          //  }
+          //});
           // No hacer pop inmediatamente para evitar doble navegación
           // Navigator.of(context).pop(true);
         } else {
@@ -207,12 +226,12 @@ class _PolizaTodoRiesgoScreenState extends State<PolizaTodoRiesgoScreen> {
             isLoading = false;
           });
 
-          // Mostrar mensaje de error con ConfirmationModal
+          // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
           showConfirmationModal(
             context,
             attitude: 0, // Negativo (error)
             label:
-                'No se pudo actualizar la alerta: ${_alertsBloc.error ?? 'Intenta nuevamente'}',
+                'No se pudo actualizar la alerta: ${ErrorUtils.cleanErrorMessage(_alertsBloc.error ?? 'Intenta nuevamente')}',
           );
         }
       }
@@ -221,12 +240,12 @@ class _PolizaTodoRiesgoScreenState extends State<PolizaTodoRiesgoScreen> {
         isLoading = false;
       });
 
-      // Mostrar mensaje de error con ConfirmationModal
+      // Mostrar mensaje de error con ConfirmationModal y limpiar el mensaje
       if (mounted) {
         showConfirmationModal(
           context,
           attitude: 0, // Negativo (error)
-          label: 'Error al guardar: $e',
+          label: 'Error al guardar: ${ErrorUtils.cleanErrorMessage(e)}',
         );
       }
     }
@@ -277,8 +296,7 @@ class _PolizaTodoRiesgoScreenState extends State<PolizaTodoRiesgoScreen> {
 
                   return TopBar(
                     title: 'Póliza todo riesgo',
-                    screenType: ScreenType.progressScreen,
-                    onBackPressed: () => Navigator.pop(context),
+                    screenType: ScreenType.expirationScreen, // Cambiado a expirationScreen para siempre navegar al home
                     actionItems: actionItems,
                   );
                 },
@@ -378,12 +396,28 @@ class _PolizaTodoRiesgoScreenState extends State<PolizaTodoRiesgoScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Mostrar la descripción de la alerta desde el bloc si está disponible
-                              Text(
-                                bloc.alertData?['description'] ??
-                                    'La póliza todo riesgo es un seguro que cubre daños a tu vehículo y a terceros. Configura esta alerta para recibir notificaciones antes de su vencimiento.',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF6B7280),
+                              RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                  children: [
+                                    const TextSpan(text: 'Contar con una Póliza de Seguro Todo Riesgo le brinda protección '),
+                                    const TextSpan(
+                                      text: 'para usted, su vehículo y terc﻿eras partes',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const TextSpan(text: '.  Configure esta alerta y '),
+                                    const TextSpan(
+                                      text: 'COTICE con nosotros',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -441,44 +475,22 @@ class _PolizaTodoRiesgoScreenState extends State<PolizaTodoRiesgoScreen> {
                                   bloc.alertData!['estado'] != 'Vencido' &&
                                   bloc.alertData!['estado'] !=
                                       'Configurar') ...[
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 15,
-                                      height: 15,
-                                      margin: const EdgeInsets.only(right: 16),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF38A8E0),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        // Usamos Center para centrar el contenido
-                                        child: Text(
-                                          'i',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Color.fromARGB(
-                                                255, 255, 255, 255),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const Expanded(
-                                      // Este widget permite que el texto ocupe el espacio restante
+                                                            Padding(
+                                padding: const EdgeInsets.symmetric( horizontal: 8),
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.info, color: Color(0xFF38A8E0)),
+                                    SizedBox(width: 8),
+                                    Expanded(
                                       child: Text(
-                                        'Te avisaremos un dia antes y el dia de vencimiento para que no se te pase.',
+                                        'Te avisaremos un día antes y el día de vencimiento para que no se te pase.',
                                         style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF6B7280),
-                                        ),
-                                        softWrap:
-                                            true, // El texto se ajusta automáticamente a varias líneas
+                                            fontSize: 16, color: Colors.black),
                                       ),
                                     ),
                                   ],
                                 ),
+                              ),
                                 const SizedBox(height: 25),
                               ],
 

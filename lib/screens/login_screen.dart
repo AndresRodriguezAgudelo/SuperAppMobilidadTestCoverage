@@ -6,6 +6,7 @@ import 'package:Equirent_Mobility/screens/phone_reset_screen.dart';
 import '../widgets/button.dart';
 import '../widgets/inputs/input_phone.dart';
 import '../BLoC/auth/auth.dart';
+import '../utils/error_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,6 +34,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String get fullPhoneNumber => _phoneNumber;
+  
+  bool get _isPhoneValid => _phoneNumber.length >= 10;
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Expanded(
                 child: Center(
                     child: Image.asset(
-                    'assets/images/logoLogin.png',
+                  'assets/images/logoLogin.png',
                   height: 120,
                   fit: BoxFit.contain,
                 )),
@@ -86,7 +89,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Text(
                           'Vamos a comenzar',
-                          style: Theme.of(context).textTheme.headlineSmall,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24
+                          ),
                         ),
                         const SizedBox(height: 20),
                         InputPhone(
@@ -96,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 20),
                         Button(
                           text: 'Ingresar',
-                          action: _isLoading
+                          action: _isLoading || !_isPhoneValid
                               ? null
                               : () async {
                                   setState(() => _isLoading = true);
@@ -104,14 +110,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   try {
                                     final response = await _authBloc
                                         .callOTP(fullPhoneNumber);
-                                    print('📡 OTP Response: $response');
 
                                     if (!mounted) return;
 
-                                    // Determinar la pantalla basado en el tipo de respuesta
                                     if (response['type'] == 'login') {
-                                      print(
-                                          '🔓 Usuario existente, navegando a validación');
                                       Navigator.pushNamed(
                                         context,
                                         '/validation',
@@ -121,8 +123,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                         },
                                       );
                                     } else {
-                                      print(
-                                          '🎁 Nuevo usuario, navegando a registro');
                                       Navigator.pushNamed(
                                         context,
                                         '/registro',
@@ -130,20 +130,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                       );
                                     }
                                   } catch (e) {
-                                    print('❌ Error calling OTP: $e');
                                     if (!mounted) return;
-
+                                    
+                                    // Limpiar el mensaje de error
+                                    final cleanedError = ErrorUtils.cleanErrorMessage(e);
+                                    
                                     // Mostrar mensaje de error
                                     NotificationCard.showNotification(
-  context: context,
-  isPositive: false,
-  icon: Icons.error,
-  text: 'Error al enviar el código: \\${e.toString()}\nPor favor intenta nuevamente.',
-  date: DateTime.now(),
-  title: 'Error',
-  duration: const Duration(seconds: 5),
-);
-
+                                      context: context,
+                                      isPositive: false,
+                                      icon: Icons.error,
+                                      text: cleanedError,
+                                      title: 'Error',
+                                      duration: const Duration(seconds: 5),
+                                    );
                                   } finally {
                                     if (mounted) {
                                       setState(() => _isLoading = false);
@@ -168,7 +168,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const PhoneResetScreen(),
+                                      builder: (context) =>
+                                          const PhoneResetScreen(),
                                     ),
                                   );
                                 },

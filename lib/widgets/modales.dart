@@ -10,6 +10,7 @@ class CustomModal extends StatelessWidget {
   final String? secondButtonText;
   final VoidCallback? onSecondButtonPressed;
   final Color? iconColor;
+  final Color? backgroundIconColor;
   final Color? buttonColor;
   final Color? secondButtonColor;
   final Color? labelButtonColor;
@@ -25,6 +26,7 @@ class CustomModal extends StatelessWidget {
     this.secondButtonText,
     this.onSecondButtonPressed,
     this.iconColor,
+    this.backgroundIconColor,
     this.buttonColor,
     this.secondButtonColor,
     this.labelButtonColor,
@@ -41,6 +43,7 @@ class CustomModal extends StatelessWidget {
     String? secondButtonText,
     VoidCallback? onSecondButtonPressed,
     Color? iconColor,
+    Color? backgroundIconColor,
     Color? buttonColor,
     Color? secondButtonColor,
     Color? labelButtonColor,
@@ -60,6 +63,7 @@ class CustomModal extends StatelessWidget {
           secondButtonText: secondButtonText,
           onSecondButtonPressed: onSecondButtonPressed ?? () => Navigator.of(context).pop(),
           iconColor: iconColor,
+          backgroundIconColor: backgroundIconColor,
           buttonColor: buttonColor,
           secondButtonColor: secondButtonColor,
           labelButtonColor: labelButtonColor,
@@ -94,17 +98,28 @@ class CustomModal extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 48,
-              color: iconColor ?? Theme.of(context).primaryColor,
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: backgroundIconColor ?? Color.fromRGBO(14, 93, 157, 1.0),
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: 45,
+                  color: iconColor ?? Theme.of(context).primaryColor,
+                ),
+              ),
             ),
             const SizedBox(height: 24),
             Text(
               title,
               style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                height: 1.2,
               ),
               textAlign: TextAlign.center,
             ),
@@ -112,8 +127,7 @@ class CustomModal extends StatelessWidget {
             Text(
               content,
               style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+                fontSize: 15,
               ),
               textAlign: TextAlign.center,
             ),

@@ -194,7 +194,7 @@ class _ProfilePhotoState extends State<ProfilePhoto> {
                         errorBuilder: (context, error, stackTrace) {
                           print('⚠️ Error cargando imagen directa: $error');
                           return Icon(
-                            Icons.person,
+                            Icons.camera_alt_outlined,
                             color: Colors.white,
                             size: widget.size * 0.5,
                           );
@@ -214,7 +214,7 @@ class _ProfilePhotoState extends State<ProfilePhoto> {
                           if (snapshot.hasError || !snapshot.hasData) {
                             print('⚠️ Error obteniendo URL de imagen: ${snapshot.error}');
                             return Icon(
-                              Icons.person,
+                              Icons.camera_alt_outlined,
                               color: Colors.white,
                               size: widget.size * 0.5,
                             );
@@ -249,7 +249,7 @@ class _ProfilePhotoState extends State<ProfilePhoto> {
                             errorBuilder: (context, error, stackTrace) {
                               print('⚠️ Error cargando imagen con ImageBloc: $error');
                               return Icon(
-                                Icons.person,
+                                Icons.camera_alt_outlined,
                                 color: Colors.white,
                                 size: widget.size * 0.5,
                               );
@@ -259,9 +259,9 @@ class _ProfilePhotoState extends State<ProfilePhoto> {
                       ),
                 )
               : Icon(
-                  Icons.camera_alt,
+                  Icons.camera_alt_outlined,
                   color: Colors.white,
-                  size: widget.size * 0.33,
+                  size: widget.size * 0.6,
                 ),
     );
     

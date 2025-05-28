@@ -31,6 +31,7 @@ class _MisVehiculosScreenState extends State<MisVehiculosScreen> {
     CustomModal.show(
       context: context,
       icon: Icons.info_outline,
+      iconColor: Colors.white,
       title: 'Límite alcanzado',
       content: 'Solo puedes agregar hasta 2 vehículos. Si necesitas gestionar otro, elimina uno existente o contáctanos para más opciones',
       buttonText: 'Aceptar',
@@ -78,12 +79,25 @@ class _MisVehiculosScreenState extends State<MisVehiculosScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              Text(
-                vehicle['licensePlate'].toString(),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Vehículo',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    vehicle['licensePlate'].toString(),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
               const Spacer(),
               const Icon(

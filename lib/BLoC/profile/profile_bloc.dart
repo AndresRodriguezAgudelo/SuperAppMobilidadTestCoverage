@@ -18,6 +18,9 @@ class ProfileBloc extends ChangeNotifier {
   Map<String, dynamic>? _profileData;
   bool _isLoading = false;
   String? _error;
+  
+  // Mapa para controlar actualizaciones en progreso por campo
+  final Map<String, bool> _updatingFields = {};
 
   // Getters
   Map<String, dynamic>? get profileData => _profileData;
@@ -79,9 +82,26 @@ class ProfileBloc extends ChangeNotifier {
   /// Actualiza un campo del perfil del usuario
   /// Retorna un Map con 'success' (bool) y 'message' (String)
   Future<Map<String, dynamic>> updateProfileField(int userId, String field, String value) async {
+    // Verificar si ya hay una actualización en progreso para este campo
+    final String updateKey = '$userId-$field';
+    if (_updatingFields[updateKey] == true) {
+      print('\n⚠️ ACTUALIZACIÓN YA EN PROGRESO');
+      print('🔑 UserId: $userId');
+      print('🔤 Campo: $field');
+      print('📝 Valor: $value');
+      
+      return {
+        'success': false,
+        'message': 'Ya hay una actualización en progreso para este campo'
+      };
+    }
+    
+    // Marcar este campo como en actualización
+    _updatingFields[updateKey] = true;
+    
     try {
       print('\n✏️ ACTUALIZANDO CAMPO DEL PERFIL');
-      print('🆔 UserId: $userId');
+      print('🔑 UserId: $userId');
       print('🔤 Campo: $field');
       print('📝 Valor: $value');
       
@@ -97,6 +117,7 @@ class ProfileBloc extends ChangeNotifier {
       );
 
       print('✅ Respuesta de actualización: $response');
+      print('Fin ciclo de peticiones');
       
       // Actualizar los datos locales con el nuevo valor
       if (_profileData != null) {
@@ -106,6 +127,12 @@ class ProfileBloc extends ChangeNotifier {
         if (field == 'email') {
           print('\n💬 ACTUALIZANDO ESTADO DE VERIFICACIÓN: Nuevo correo no verificado');
           _profileData!['verify'] = false;
+        }
+        
+        // Si se está actualizando el nombre, actualizar también el AuthContext
+        if (field == 'name') {
+          print('\n💬 ACTUALIZANDO NOMBRE EN AUTH CONTEXT: $value');
+          _authContext.updateName(value);
         }
       }
       
@@ -134,6 +161,8 @@ class ProfileBloc extends ChangeNotifier {
         'message': errorMessage
       };
     } finally {
+      // Limpiar el estado de actualización para este campo
+      _updatingFields[updateKey] = false;
       _isLoading = false;
       notifyListeners();
     }
@@ -143,7 +172,7 @@ class ProfileBloc extends ChangeNotifier {
   Future<bool> updateUserProfile(int userId, Map<String, dynamic> updateData) async {
     try {
       print('\n✏️ ACTUALIZANDO PERFIL DE USUARIO');
-      print('🆔 UserId: $userId');
+      print('🔑 UserId: $userId');
       print('📝 Datos a actualizar: $updateData');
       
       _isLoading = true;
@@ -169,7 +198,9 @@ class ProfileBloc extends ChangeNotifier {
       print('\n❌ ERROR ACTUALIZANDO PERFIL DE USUARIO');
       print('📡 Error: $e');
       _error = e.toString();
-      return false;
+      
+      // Lanzar una excepción para que se maneje en el bloque catch del llamador
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -5,7 +5,7 @@ import 'dart:math';
 import '../../BLoC/services/services_bloc.dart';
 import '../../BLoC/images/image_bloc.dart';
 import 'servicio_card.dart';
-import '../../widgets/loading.dart';
+import '../../widgets/transparentloading.dart';
 
 class NuestrosServicios extends StatefulWidget {
   const NuestrosServicios({super.key});
@@ -22,7 +22,7 @@ class _NuestrosServiciosState extends State<NuestrosServicios> {
     return Consumer<ServicesBloc>(
       builder: (context, servicesBloc, child) {
         // Usar el widget Loading para mostrar el estado de carga
-        return Loading(
+        return LoadingTransparent(
           isLoading: servicesBloc.isLoading,
           message: 'Cargando servicios...',
           child: servicesBloc.error != null
@@ -31,7 +31,8 @@ class _NuestrosServiciosState extends State<NuestrosServicios> {
               )
             : servicesBloc.services.isEmpty
               ? const Center(
-                  child: Text('No hay servicios disponibles'),
+                  //child: Text('No hay servicios disponibles'),
+                  child: Text(''),
                 )
               : _buildServicesContent(context, servicesBloc.services),
         );
@@ -73,9 +74,9 @@ class _NuestrosServiciosState extends State<NuestrosServicios> {
               // Limitar a un máximo de 2 filas por página
               final int rowsToShow = min(rowsNeeded, rowsPerPage);
               
-              // Calcular la altura basada en las filas (120px por fila + espaciado)
-              final double cardHeight = 120.0;
-              final double rowSpacing = 8.0;
+              // Calcular la altura basada en las filas con suficiente espacio para el título
+              final double cardHeight = 140.0; // Aumentado de 120 a 140 para dar más espacio al título
+              final double rowSpacing = 16.0; // Aumentado de 8 a 16 para mayor separación entre filas
               final double totalHeight = (cardHeight * rowsToShow) + (rowsToShow > 1 ? rowSpacing : 0);
               
               return SizedBox(
@@ -94,7 +95,7 @@ class _NuestrosServiciosState extends State<NuestrosServicios> {
                         crossAxisCount: itemsPerRow,
                         mainAxisSpacing: 8,
                         crossAxisSpacing: 16,
-                        childAspectRatio: 100 / 120,
+                        childAspectRatio: 100 / 140, // Ajustado para coincidir con la nueva altura
                       ),
                       // Calcular el número de items para esta página específica
                       itemCount: min((pageIndex + 1) * itemsPerPage, services.length) - (pageIndex * itemsPerPage),
@@ -123,7 +124,7 @@ class _NuestrosServiciosState extends State<NuestrosServicios> {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 28),
           // Indicadores de página - solo mostrar si hay más de una página
           if (totalPages > 1)
             Row(
@@ -137,7 +138,7 @@ class _NuestrosServiciosState extends State<NuestrosServicios> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(4),
                     color: _currentPage == index
-                        ? const Color(0xFF1E5E9E)
+                        ? const Color.fromRGBO(46, 168, 224, 1.0)
                         : Colors.grey[300],
                   ),
                 ),

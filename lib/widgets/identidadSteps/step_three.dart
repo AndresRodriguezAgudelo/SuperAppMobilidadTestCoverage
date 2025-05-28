@@ -84,7 +84,6 @@ class StepThreeState extends State<StepThree> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF1E5E9E),
             ),
           ),
           const SizedBox(height: 24),
@@ -134,7 +133,7 @@ class StepThreeState extends State<StepThree> {
                   ),
                 ),
                 child: InputSelect(
-                  label: 'Tipos de documento',
+                  label: 'Tipos de documento de propietario',
                   options: documentTypes.map((type) => type['typeName'].toString()).toList(),
                   onChanged: (value, isValid) {
                     setState(() {

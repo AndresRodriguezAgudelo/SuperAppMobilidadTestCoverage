@@ -15,7 +15,7 @@ class ServicesBloc extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   
-  Future<void> getServices({int page = 1, int take = 10}) async {
+  Future<void> getServices({int page = 1, int take = 15}) async {
     try {
       debugPrint('\n🔄 OBTENIENDO SERVICIOS');
       ///debugPrint('📄 Página: $page, Cantidad: $take');

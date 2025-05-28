@@ -33,6 +33,7 @@ import 'screens/pagos_screen.dart';
 import 'screens/legal_screen.dart';
 import 'screens/my_profile_screen.dart';
 import 'screens/notification_screen.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,10 +59,6 @@ void main() async {
       } else {
         await Firebase.initializeApp();
       }
-
-      ///debugPrint('MAIN: Firebase inicializado correctamente');
-    } else {
-      ///debugPrint('MAIN: Firebase ya estaba inicializado');
     }
   } catch (e) {
     ///debugPrint('MAIN: Error al inicializar Firebase: $e');
@@ -77,28 +74,98 @@ void main() async {
     }
     WebViewPlatform.instance = platform;
   }
-
-  // Inicializar el sistema de notificaciones
+  // Inicializar la pantalla de notificaciones
   NotificationScreen.initialize();
-  ///debugPrint('MAIN: Sistema de notificaciones inicializado');
+  
+  // Inicializar el servicio de notificaciones para manejar notificaciones en segundo plano
+  try {
+    await NotificationService().initialize();
+    debugPrint('MAIN: Servicio de notificaciones inicializado correctamente');
+  } catch (e) {
+    debugPrint('MAIN: Error al inicializar el servicio de notificaciones: $e');
+  }
 
   runApp(const RestartWidget(child: MyApp()));
 }
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
-// Función global para reiniciar la app (útil para logout)
 void restartApp(BuildContext context) {
   RestartWidget.restartApp(context);
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    
+    // Verificar si hay navegación pendiente al iniciar la app
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint('\n==================================================');
+      debugPrint('MYAPP: VERIFICANDO NAVEGACIÓN PENDIENTE AL INICIAR LA APP');
+      if (NotificationService.hasPendingNavigation()) {
+        debugPrint('MYAPP: ¡NAVEGACIÓN PENDIENTE DETECTADA!');
+        
+        // Procesar la navegación pendiente directamente si tenemos un contexto válido
+        // Usar un retraso más largo para asegurar que la app esté completamente inicializada
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          final context = navigatorKey.currentContext;
+          if (context != null) {
+            debugPrint('MYAPP: PROCESANDO NAVEGACIÓN PENDIENTE DIRECTAMENTE DESDE INIT');
+            NotificationService.processPendingNavigation(context);
+          } else {
+            debugPrint('MYAPP: NO HAY CONTEXTO VÁLIDO PARA PROCESAR NAVEGACIÓN EN INIT');
+          }
+        });
+      }
+      debugPrint('==================================================\n');
+    });
+  }
+  
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Cuando la app vuelve a primer plano, verificar si hay navegación pendiente
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('\n==================================================');
+      debugPrint('MYAPP: APP RESUMED - VERIFICANDO NAVEGACIÓN PENDIENTE');
+      if (NotificationService.hasPendingNavigation()) {
+        debugPrint('MYAPP: ¡NAVEGACIÓN PENDIENTE DETECTADA EN RESUMED!');
+        
+        // Procesar la navegación pendiente directamente si tenemos un contexto válido
+        Future.delayed(const Duration(milliseconds: 500), () {
+          final context = navigatorKey.currentContext;
+          if (context != null) {
+            debugPrint('MYAPP: PROCESANDO NAVEGACIÓN PENDIENTE DIRECTAMENTE');
+            NotificationService.processPendingNavigation(context);
+          } else {
+            debugPrint('MYAPP: NO HAY CONTEXTO VÁLIDO PARA PROCESAR NAVEGACIÓN');
+          }
+        });
+      }
+      debugPrint('==================================================\n');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<RouteObserver<ModalRoute<dynamic>>>(
+          create: (_) => routeObserver,
+        ),
         ChangeNotifierProvider(create: (_) => AuthContext()),
         ChangeNotifierProvider(create: (_) => HomeBloc()),
         ChangeNotifierProvider(create: (_) => GuidesBloc()),
@@ -114,6 +181,59 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         navigatorKey: navigatorKey,
         navigatorObservers: [routeObserver],
+        // Implementar un generador de rutas personalizado para evitar el error de Navigator vacío
+        onGenerateRoute: (RouteSettings settings) {
+          debugPrint('MAIN: Generando ruta: ${settings.name}');
+          
+          // Si la ruta es nula o vacía, redirigir a SplashScreen
+          if (settings.name == null || settings.name!.isEmpty) {
+            return MaterialPageRoute(
+              settings: const RouteSettings(name: '/'),
+              builder: (context) => const SplashScreen(),
+            );
+          }
+          
+          // Mapeo de rutas a widgets
+          switch (settings.name) {
+            case '/':
+              return MaterialPageRoute(builder: (context) => const SplashScreen());
+            case '/login':
+              return MaterialPageRoute(builder: (context) => const LoginScreen());
+            case '/home':
+              return MaterialPageRoute(builder: (context) => const HomeScreen());
+            case '/notifications':
+              return MaterialPageRoute(builder: (context) => const NotificationScreen());
+            case '/mis_vehiculos':
+              return MaterialPageRoute(builder: (context) => const MisVehiculosScreen());
+            case '/guias':
+              return MaterialPageRoute(builder: (context) => const GuiasScreen());
+            case '/servicios':
+              return MaterialPageRoute(builder: (context) => OurServiciosScreen());
+            case '/pagos':
+              return MaterialPageRoute(builder: (context) => const PagosScreen());
+            case '/legal':
+              return MaterialPageRoute(builder: (context) => const LegalScreen());
+            case '/validation':
+              // Pasar los argumentos a la pantalla de validación
+              return MaterialPageRoute(
+                builder: (context) => const ValidationCodeScreen(),
+                settings: settings, // Pasar los argumentos originales
+              );
+            case '/registro':
+              // Pasar los argumentos a la pantalla de registro
+              return MaterialPageRoute(
+                builder: (context) => const RegisterUserScreen(),
+                settings: settings, // Pasar los argumentos originales
+              );
+            case '/mi_perfil':
+              return MaterialPageRoute(builder: (context) => const MiPerfilScreen());
+            default:
+              // Si la ruta no existe, redirigir a HomeScreen
+              debugPrint('MAIN: Ruta no encontrada: ${settings.name}, redirigiendo a HomeScreen');
+              return MaterialPageRoute(builder: (context) => const HomeScreen());
+          }
+        },
+        // No necesitamos initialRoute porque ya tenemos onGenerateRoute
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
@@ -125,21 +245,8 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           useMaterial3: true,
         ),
+        // Usamos initialRoute para asegurar que siempre haya una ruta inicial
         initialRoute: '/',
-        routes: {
-          '/': (context) => const SplashScreen(),
-          '/login': (context) => const LoginScreen(),
-          '/home': (context) => const HomeScreen(),
-          '/notifications': (context) => const NotificationScreen(),
-          '/mis_vehiculos': (context) => const MisVehiculosScreen(),
-          '/guias': (context) => const GuiasScreen(),
-          '/servicios': (context) => OurServiciosScreen(),
-          '/pagos': (context) => const PagosScreen(),
-          '/legal': (context) => const LegalScreen(),
-          '/validation': (context) => const ValidationCodeScreen(),
-          '/registro': (context) => const RegisterUserScreen(),
-          '/mi_perfil': (context) => const MiPerfilScreen(),
-        },
       ),
     );
   }

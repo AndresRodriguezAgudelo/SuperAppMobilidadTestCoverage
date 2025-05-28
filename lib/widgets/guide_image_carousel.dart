@@ -102,7 +102,7 @@ class _GuideImageCarouselState extends State<GuideImageCarousel> {
     return Column(
       children: [
         SizedBox(
-          height: 200,
+          height: 300,
           child: PageView.builder(
             controller: _pageController,
             onPageChanged: _onPageChanged,
@@ -123,14 +123,12 @@ class _GuideImageCarouselState extends State<GuideImageCarousel> {
                     ? Image.network(
                         imageUrl,
                         width: double.infinity,
-                        height: 200,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           print('⚠️ Error mostrando imagen: $error');
                           return Image.asset(
                             'assets/images/image_servicio1.png',
                             width: double.infinity,
-                            height: 200,
                             fit: BoxFit.cover,
                           );
                         },
@@ -138,7 +136,6 @@ class _GuideImageCarouselState extends State<GuideImageCarousel> {
                     : Image.asset(
                         imageUrl,
                         width: double.infinity,
-                        height: 200,
                         fit: BoxFit.cover,
                       ),
                 ),

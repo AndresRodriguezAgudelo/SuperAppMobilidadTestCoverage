@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import '../utils/error_utils.dart';
 
 class NotificationCard extends StatelessWidget {
   final bool isPositive;
   final IconData icon;
   final String text;
-  final DateTime date;
+  final DateTime? date;
   final String title;
   final VoidCallback onTap;
+  final Color? backgroundColor; // Color personalizado para el fondo
+  final Color? iconBackgroundColor; // Color personalizado para el fondo del icono
+  final Color? textColor; // Color personalizado para el texto
 
   const NotificationCard({
     super.key,
     required this.isPositive,
     required this.icon,
     required this.text,
-    required this.date,
+    this.date, // Ahora es opcional
     required this.title,
     required this.onTap,
+    this.backgroundColor, // Color opcional para el fondo
+    this.iconBackgroundColor, // Color opcional para el fondo del icono
+    this.textColor, // Color opcional para el texto
   });
 
   @override
@@ -27,63 +35,72 @@ class NotificationCard extends StatelessWidget {
   }
 
   Widget _buildNotificationContent() {
+    // Definir colores por defecto o usar los personalizados
+    final bgColor = backgroundColor ?? 
+                   (isPositive ? const Color(0xFFECFAD7) : const Color(0xFFFADDD7));
+    final iconBgColor = iconBackgroundColor ?? 
+                      (isPositive ? const Color(0xFF319E7C) : const Color(0xFFE05C3A));
+    final txtColor = textColor ?? 
+                    (isPositive ? const Color(0xFF319E7C) : const Color(0xFFE05C3A));
+    
     return Material(
       elevation: 4,
       borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isPositive ? const Color(0xFFECFAD7) : const Color(0xFFFADDD7),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: isPositive
-                    ? const Color(0xFF319E7C)
-                    : const Color(0xFFE05C3A),
-                shape: BoxShape.circle,
+      child: InkWell(
+        onTap: onTap, // Añadir interactividad al tocar la tarjeta
+        borderRadius: BorderRadius.circular(8),
+        splashColor: bgColor.withOpacity(0.5), // Color de splash personalizado
+        highlightColor: bgColor.withOpacity(0.3), // Color de highlight personalizado
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    DateFormat('dd/MM/yyyy').format(date),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6B7280),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (date != null) Text(
+                      DateFormat('dd/MM/yyyy').format(date!),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6B7280),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isPositive
-                          ? const Color(0xFF319E7C)
-                          : const Color(0xFFE05C3A),
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(height: 4),
+                    Text(
+                      text,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: txtColor,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
-    );
+    ));
   }
 
   // Método estático para mostrar la notificación como overlay
@@ -92,10 +109,17 @@ class NotificationCard extends StatelessWidget {
     required bool isPositive,
     required IconData icon,
     required String text,
-    required DateTime date,
+    DateTime? date, // Ahora es opcional
     required String title,
     Duration? duration,
+    Color? backgroundColor, // Color personalizado para el fondo
+    Color? iconBackgroundColor, // Color personalizado para el fondo del icono
+    Color? textColor, // Color personalizado para el texto
   }) {
+    debugPrint('🔔 NotificationCard: Mostrando notificación con duración: ${duration?.inSeconds ?? 4} segundos');
+    // Limpiar el mensaje de error si contiene APIException
+    final cleanedText = ErrorUtils.cleanErrorMessage(text);
+    
     // Crear un overlay entry
     final overlay = Overlay.of(context);
     late OverlayEntry entry;
@@ -104,10 +128,13 @@ class NotificationCard extends StatelessWidget {
       builder: (context) => _AnimatedNotification(
         isPositive: isPositive,
         icon: icon,
-        text: text,
-        date: date,
+        text: cleanedText,
+        date: date, // Ahora puede ser null
         title: title,
         duration: duration,
+        backgroundColor: backgroundColor,
+        iconBackgroundColor: iconBackgroundColor,
+        textColor: textColor,
         onDismiss: () {
           entry.remove();
         },
@@ -122,19 +149,25 @@ class _AnimatedNotification extends StatefulWidget {
   final bool isPositive;
   final IconData icon;
   final String text;
-  final DateTime date;
+  final DateTime? date; // Ahora es opcional
   final String title;
   final VoidCallback onDismiss;
   final Duration? duration;
+  final Color? backgroundColor; // Color personalizado para el fondo
+  final Color? iconBackgroundColor; // Color personalizado para el fondo del icono
+  final Color? textColor; // Color personalizado para el texto
 
   const _AnimatedNotification({
     required this.isPositive,
     required this.icon,
     required this.text,
-    required this.date,
+    this.date,
     required this.title,
     required this.onDismiss,
     this.duration,
+    this.backgroundColor,
+    this.iconBackgroundColor,
+    this.textColor,
   });
 
   @override
@@ -175,22 +208,37 @@ class _AnimatedNotificationState extends State<_AnimatedNotification>
     // Iniciar animación de entrada
     _controller.forward();
 
-    // Auto-cerrar después del tiempo especificado o 3 segundos por defecto si es positiva
-    Future.delayed(widget.duration ?? const Duration(seconds: 4), () {
-      if (mounted) {
-        _dismiss();
+    // Auto-cerrar después del tiempo especificado (4 segundos por defecto)
+    // Sumamos 500ms adicionales para compensar la duración de la animación de salida
+    // y asegurar que la notificación se muestre completamente durante el tiempo deseado
+    debugPrint('⏰ NotificationCard: Iniciando temporizador para notificación con duración: ${widget.duration?.inMilliseconds ?? 4000} ms');
+    
+    Future.delayed(
+      Duration(
+        milliseconds: (widget.duration?.inMilliseconds ?? 4000) + 500,
+      ), 
+      () {
+        debugPrint('⏰ NotificationCard: Tiempo cumplido, intentando descartar notificación');
+        if (mounted) {
+          debugPrint('✅ NotificationCard: Widget montado, ejecutando dismiss');
+          _dismiss();
+        } else {
+          debugPrint('❌ NotificationCard: Widget ya no está montado, no se puede descartar');
+        }
       }
-    });
+    );
   }
 
   void _dismiss() {
+    debugPrint('🔄 NotificationCard: Iniciando animación de salida');
     _controller.reverse().then((_) {
+      debugPrint('✅ NotificationCard: Animación de salida completada, ejecutando onDismiss');
       widget.onDismiss();
     });
   }
 
   void _noAction() {
-    print('no action');
+    debugPrint('ℹ️ NotificationCard: Tap en notificación - no action');
   }
 
   @override
@@ -213,8 +261,11 @@ class _AnimatedNotificationState extends State<_AnimatedNotification>
             isPositive: widget.isPositive,
             icon: widget.icon,
             text: widget.text,
-            date: widget.date,
+            date: widget.date, // Ahora puede ser null
             title: widget.title,
+            backgroundColor: widget.backgroundColor,
+            iconBackgroundColor: widget.iconBackgroundColor,
+            textColor: widget.textColor,
             //onTap: _dismiss,
             onTap: _noAction,
           ),

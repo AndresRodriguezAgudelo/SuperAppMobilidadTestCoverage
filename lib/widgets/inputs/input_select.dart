@@ -37,13 +37,36 @@ class _InputSelectState extends State<InputSelect> {
     super.dispose();
   }
 
+  // Calcular la altura del modal basada en la cantidad de opciones
+  double _calculateModalHeight(BuildContext context) {
+    // Altura estimada para cada opción (altura del ListTile + espaciado)
+    const double optionHeight = 56.0;
+    
+    // Altura para el encabezado (título + indicador de arrastre + padding)
+    const double headerHeight = 80.0;
+    
+    // Altura para el padding inferior
+    const double bottomPadding = 60.0;
+    
+    // Calcular altura basada en la cantidad de opciones (máximo 9)
+    final int visibleOptions = widget.options.length > 9 ? 9 : widget.options.length;
+    final double contentHeight = headerHeight + (visibleOptions * optionHeight) + bottomPadding;
+    
+    // Limitar la altura máxima al 70% de la pantalla
+    final double maxHeight = MediaQuery.of(context).size.height * 0.7;
+    
+    // Retornar el mínimo entre la altura calculada y la altura máxima
+    return contentHeight < maxHeight ? contentHeight : maxHeight;
+  }
+
   void _showOptionsModal() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color.fromARGB(0, 255, 10, 10),
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        // Altura dinámica basada en la cantidad de opciones (máximo 9 opciones visibles)
+        height: _calculateModalHeight(context),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -132,7 +155,8 @@ class _InputSelectState extends State<InputSelect> {
           readOnly: true,
           onTap: _showOptionsModal,
           decoration: InputDecoration(
-            hintText: 'Selecciona ${widget.label.toLowerCase()}',
+            //hintText: 'Selecciona ${widget.label.toLowerCase()}',
+            hintText: 'Selecciona',
             suffixIcon: const Icon(Icons.keyboard_arrow_down),
             filled: true,
             fillColor: const Color.fromARGB(255, 241, 241, 241),
